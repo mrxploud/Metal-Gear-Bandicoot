@@ -32,7 +32,14 @@ def pedir_seletor(ps, sym=None):
     """Logo depois de ligar: pede o seletor de fases no lugar do título (o executável já está na RAM)."""
     sym = sym or simbolos()
     ps.run(30)
-    if 'MGB_SeletorDeFases' in sym:
+    # Só no executável deste build: num disco antigo (testes 1 a 9, que já abrem no seletor) o endereço é de outra
+    # variável. Confere os primeiros 4 KB do programa na RAM contra o _mgsi.exe que gerou o mapa.
+    exe = os.path.join(os.path.dirname(MAPA), '_mgsi.exe')
+    with open(exe, 'rb') as f:
+        cab = f.read(0x800 + 0x1000)
+    inicio = int.from_bytes(cab[0x18:0x1C], 'little')
+    mesmo = bytes(ps.read(inicio, 0x1000)) == cab[0x800:0x1800]
+    if 'MGB_SeletorDeFases' in sym and mesmo:
         ps.w32(sym['MGB_SeletorDeFases'], 1)
 
 
