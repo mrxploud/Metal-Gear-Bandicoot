@@ -1,0 +1,560 @@
+diff --git a/build/linker_command_file.txt b/build/linker_command_file.txt
+index ffe8f4d..a865bb2 100644
+--- a/build/linker_command_file.txt
++++ b/build/linker_command_file.txt
+@@ -246,6 +246,8 @@
+ 
+ {% if DEV_EXE %}
+     include "{{OBJ_DIR}}\contrib\dev\overlay_table.obj"
++    include "{{OBJ_DIR}}\crash\crash.obj"
++    include "{{OBJ_DIR}}\crash\crash_data.obj"
+     include "{{OBJ_DIR}}\game\select.obj"
+     include "{{OBJ_DIR}}\takabe\vib_edit.obj"
+     include "{{OBJ_DIR}}\takabe\sepia.obj"
+diff --git a/source/anime/effect/mark.c b/source/anime/effect/mark.c
+index dd65d88..1268486 100644
+--- a/source/anime/effect/mark.c
++++ b/source/anime/effect/mark.c
+@@ -152,6 +152,15 @@ static u_short MarkTex[] = {
+ #define TEX_Q_MARK      1
+ #define TEX_HEART       2
+ 
++#ifdef DEV_EXE
++/* Metal Gear Bandicoot: o "!" e o "?" dos guardas viram "WOAH!" e "WOAH?" (texturas do crash.c) */
++void AN_SetMarkTextures( u_short b_mark, u_short q_mark )
++{
++    MarkTex[TEX_B_MARK] = b_mark;
++    MarkTex[TEX_Q_MARK] = q_mark;
++}
++#endif
++
+ /*---------------------------------------------------------------------------*/
+ 
+ void *AN_HeadMark( MATRIX *world, int mark )
+@@ -203,6 +212,10 @@ void *AN_HeadMark( MATRIX *world, int mark )
+         break;
+     }
+ 
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: "WOAH!" e "WOAH?" sao largos (64x24); o coracao continua quadrado */
++    anim->size_w = ( anim->tex == MarkTex[TEX_HEART] ) ? anim->size_h : anim->size_h * 8 / 3;
++#endif
+     anim->pre_script = &pre;
+     return NewAnime( world, 0, anim );
+ }
+@@ -256,6 +269,10 @@ void *AN_Unknown_800CA320( MATRIX *world, int mark )
+         break;
+     }
+ 
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: "WOAH!" e "WOAH?" sao largos (64x24); o coracao continua quadrado */
++    anim->size_w = ( anim->tex == MarkTex[TEX_HEART] ) ? anim->size_h : anim->size_h * 8 / 3;
++#endif
+     anim->pre_script = &pre;
+     return NewAnime( world, 0, anim );
+ }
+@@ -310,6 +327,10 @@ void *AN_Unknown_800CA458( MATRIX *world, int mark )
+         break;
+     }
+ 
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: "WOAH!" e "WOAH?" sao largos (64x24); o coracao continua quadrado */
++    anim->size_w = ( anim->tex == MarkTex[TEX_HEART] ) ? anim->size_h : anim->size_h * 8 / 3;
++#endif
+     anim->pre_script = &pre;
+     return NewAnime( world, 0, anim );
+ }
+diff --git a/source/chara/snake/sna_init.c b/source/chara/snake/sna_init.c
+index 15d1777..d184453 100644
+--- a/source/chara/snake/sna_init.c
++++ b/source/chara/snake/sna_init.c
+@@ -1,4 +1,7 @@
+ #include "sna_init.h"
++#ifdef DEV_EXE
++#include "crash/crash.h"
++#endif
+ 
+ #include <stdio.h>
+ #include <sys/types.h>
+@@ -292,6 +295,17 @@ PUNCH punch_info[] =
+     {{0, 200, 600}, {500, 250, 500}, {0, 0, 100}, 0, 3}
+ };
+ 
++#ifdef DEV_EXE
++/* Metal Gear Bandicoot: o giro do Crash acerta em volta dele inteiro (caixa centrada no corpo, raio 900)
++   e derruba como o chute do Snake */
++PUNCH crash_spin_info = {{0, 200, 0}, {900, 300, 900}, {0, 0, 100}, 0, 3};
++#define SPIN_OR(punch) (&crash_spin_info)
++#define SPIN_MODE(mode) (4)
++#else
++#define SPIN_OR(punch) (punch)
++#define SPIN_MODE(mode) (mode)
++#endif
++
+ GV_PAD GV_PadData_8009F0C4 = {0, 0, 0, 0, -1, 0, 0, 0, 0, 0};
+ 
+ SVECTOR svector_800AB7CC = {150, 0, 50, 0};
+@@ -3095,6 +3109,47 @@ void sna_fn_800531F4(SnaInitWork *work, int time)
+     }
+ }
+ 
++#ifdef DEV_EXE
++/* Metal Gear Bandicoot: correr + X = a derrapada do Crash 3 (pedido do ByteMirage). No MGS1 isso so agachava e
++ * deitava, e o Crash "grudava no chao tremendo". Aqui o Snake (invisivel) fica na pose de parado e desliza para a
++ * frente, freando; o crash.c le crash_slide e toca a derrapada. Quem estiver na frente cai, como no Warped. */
++#define SLIDE_TEMPO 18  /* quadros do jogo (~0,6 s) */
++#define SLIDE_VELOC 200 /* unidades por quadro no comeco (correndo, o Snake anda ~105) */
++PUNCH crash_slide_info = {{0, 200, 500}, {500, 300, 500}, {0, 0, 100}, 0, 3};
++
++void sna_anim_crash_slide(SnaInitWork *work, int time)
++{
++    if (time == 0)
++    {
++        work->field_9C8_anim_update_fn_3p = sna_fn_nothing_80053B80;
++        work->field_9CC_anim_update_fn_1p = sna_fn_80052120;
++        work->field_A26_stance = STAND;
++        SetAction_8004E22C(work, work->actpack->still->stand, 4);
++        GM_SeSet(&work->control.mov, SE_CHANGE_STANCE);
++    }
++
++    if (time < SLIDE_TEMPO)
++    {
++        crash_slide = SLIDE_TEMPO - time;
++        GV_DirVec2(work->control.rot.vy, SLIDE_VELOC * (SLIDE_TEMPO - time) / SLIDE_TEMPO, &work->control.step);
++        if ((time & 3) == 2)
++        {
++            sub_8004FCB8(work, &crash_slide_info, 4);
++        }
++        return;
++    }
++
++    if (work->field_9B0_pad_ptr->status & PAD_CROSS)
++    {
++        sna_start_anim_8004E1F4(work, &sna_anim_crouch_800527DC);
++    }
++    else
++    {
++        sna_start_anim_8004E1F4(work, &sna_anim_idle_8005275C);
++    }
++}
++#endif
++
+ void sna_80053360(SnaInitWork *work, int time)
+ {
+     int angle;
+@@ -3107,6 +3162,13 @@ void sna_80053360(SnaInitWork *work, int time)
+     if (work->field_9B0_pad_ptr->press & PAD_CROSS)
+     {
+         GM_ClearPlayerStatusFlag(PLAYER_MOVE);
++#ifdef DEV_EXE
++        if (!GM_CheckPlayerStatusFlag(PLAYER_IN_THE_WATER))
++        {
++            sna_start_anim_8004E1F4(work, &sna_anim_crash_slide);
++            return;
++        }
++#endif
+         sna_start_anim_8004E1F4(work, &sna_anim_crouch_800527DC);
+         return;
+     }
+@@ -6792,7 +6854,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
+ 
+     if ( time == 4 )
+     {
+-        sub_8004FCB8(work, &punch_info[0], 3);
++        sub_8004FCB8(work, SPIN_OR(&punch_info[0]), SPIN_MODE(3));
+ 
+         sound = SE_PUNCH_SWING;
+         if ( GM_CheckPlayerStatusFlag(PLAYER_IN_THE_WATER) )
+@@ -6817,7 +6879,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
+ 
+     if ( time == 11 )
+     {
+-        sub_8004FCB8(work, &punch_info[1], 3);
++        sub_8004FCB8(work, SPIN_OR(&punch_info[1]), SPIN_MODE(3));
+ 
+         sound = SE_PUNCH_SWING;
+         if ( GM_CheckPlayerStatusFlag(PLAYER_IN_THE_WATER) )
+@@ -6842,7 +6904,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
+ 
+     if ( time == 22 )
+     {
+-        sub_8004FCB8(work, &punch_info[2], 4);
++        sub_8004FCB8(work, SPIN_OR(&punch_info[2]), SPIN_MODE(4));
+ 
+         sound = SE_KICK_SWING;
+         if ( GM_CheckPlayerStatusFlag(PLAYER_IN_THE_WATER) )
+@@ -7975,6 +8037,47 @@ static inline void sna_act_helper2_8005AD10(SnaInitWork *work)
+     }
+ }
+ 
++#ifdef DEV_EXE
++/* Metal Gear Bandicoot: o Aku Aku (pedido do ByteMirage). Com mascara, o golpe e absorvido: a vida volta e o Snake
++ * nao reage, so pisca (como no Warped). Com a 3a mascara, invencivel por 20 s e quem encostar no Crash cai morto
++ * (o toque da morte: um golpe em volta do corpo inteiro, com dano de matar). */
++PUNCH crash_toque_info = {{0, 0, 0}, {600, 600, 600}, {0, 0, 100}, 1024, 3};
++static int crash_aku_estava;
++
++static void CrashAkuSnake(SnaInitWork *work, TARGET *target)
++{
++    if (crash_aku_inv > 0)
++    {
++        if (!GM_CheckPlayerStatusFlag(PLAYER_INVINCIBLE) || work->field_A24_invuln_frames != 0)
++        {
++            sna_set_invuln_8004F2A0(work, 0); /* 0 = invencivel sem piscar, ate a gente tirar */
++        }
++        crash_aku_estava = 1;
++        if (GV_Time & 1)
++        {
++            /* aqui o GM_CurrentMap ainda e o do ultimo ator (o Snake so acerta no GM_ActControl, mais adiante) */
++            GM_CurrentMap = work->control.map->index;
++            DG_SetPos2(&work->control.mov, &work->control.rot);
++            sub_8004FCB8(work, &crash_toque_info, 4);
++        }
++        return;
++    }
++    if (crash_aku_estava)
++    {
++        crash_aku_estava = 0;
++        sna_clear_invuln_8004F2EC(work);
++    }
++    if ((target->damaged & 0x6) && Crash_AkuAbsorve())
++    {
++        target->vital += target->damage;
++        target->damage = 0;
++        target->damaged &= ~(0x2 | 0x4 | 0x8 | 0x80);
++        target->offset = DG_ZeroVector;
++        sna_set_invuln_8004F2A0(work, 60);
++    }
++}
++#endif
++
+ static void Act(SnaInitWork *work)
+ {
+     SVECTOR vec;
+@@ -8029,6 +8132,10 @@ static void Act(SnaInitWork *work)
+ 
+     pTarget = work->field_89C_pTarget;
+ 
++#ifdef DEV_EXE
++    CrashAkuSnake(work, pTarget);
++#endif
++
+     if ( pTarget->damaged & 8 )
+     {
+         GV_AddVec3(&pTarget->offset, &work->control.step, &work->control.step);
+@@ -8520,6 +8627,10 @@ static inline int GetResources(SnaInitWork *work, int name, int where)
+ 
+     work->shadow = NewShadow2(control, body, shadow, &work->enable_shadow);
+ 
++#ifdef DEV_EXE
++    NewCrashBody(body); /* Metal Gear Bandicoot */
++#endif
++
+     dword_800ABA1C = 0;
+     GM_BombSeg = 0;
+ 
+diff --git a/source/enemy/action.c b/source/enemy/action.c
+index 3915422..0c7149c 100644
+--- a/source/enemy/action.c
++++ b/source/enemy/action.c
+@@ -1,3 +1,6 @@
++#ifdef DEV_EXE
++extern void Crash_Woah( void );
++#endif
+ #include "enemy.h"
+ 
+ #include <stdio.h>
+@@ -1886,7 +1889,11 @@ void ENE_PutMark( WatcherWork *work, int mark )
+     mat = &work->body.objs->objs[6].world;
+     if( mark == 0 )
+     {
++#ifdef DEV_EXE
++        Crash_Woah(); /* Metal Gear Bandicoot: o guarda grita "Woah!" */
++#else
+         COM_CallBikkuriSe( &work->control.mov , 0x10 );
++#endif
+     }
+ 
+     if ( work->mark_time )
+diff --git a/source/enemy/boxkeri.c b/source/enemy/boxkeri.c
+index dfe2246..c06e0bf 100644
+--- a/source/enemy/boxkeri.c
++++ b/source/enemy/boxkeri.c
+@@ -1,3 +1,6 @@
++#ifdef DEV_EXE
++#include "crash/crash.h"
++#endif
+ #include "boxkeri.h"
+ 
+ #include "mgstype.h"
+@@ -23,6 +26,9 @@ typedef struct _Work
+     short          field_78;
+     short          field_7A;
+     MATRIX         light[2];
++#ifdef DEV_EXE
++    void          *crate; /* Metal Gear Bandicoot: a caixa do Crash que voa (a TNT explode) */
++#endif
+ } Work;
+ 
+ /*---------------------------------------------------------------------------*/
+@@ -111,6 +117,9 @@ static void Act(Work *work)
+ 
+ static void Die(Work *work)
+ {
++#ifdef DEV_EXE
++    Crash_CrateRelease(work->crate);
++#endif
+     GM_FreeObject((OBJECT *)&work->body);
+ }
+ 
+@@ -144,6 +153,9 @@ static int GetResources(Work *work, MATRIX *world, SVECTOR *arg2)
+     GM_ConfigObjectLight((OBJECT *)obj, work->light);
+ 
+     work->body.objs->objs[0].raise = 500;
++#ifdef DEV_EXE
++    work->crate = Crash_CrateFly(work->body.objs, GM_Item - IT_Box1);
++#endif
+ 
+     work->field_44 = DG_ZeroVector;
+     work->field_48 = DG_ZeroVector;
+diff --git a/source/equip/box.c b/source/equip/box.c
+index 4f0959d..6bcab09 100644
+--- a/source/equip/box.c
++++ b/source/equip/box.c
+@@ -5,6 +5,9 @@
+ #include "libdg/libdg.h"
+ #include "game/game.h"
+ #include "thing/sight.h"
++#ifdef DEV_EXE
++#include "crash/crash.h"
++#endif
+ 
+ extern int dword_8009F604;
+ 
+@@ -26,6 +29,9 @@ typedef struct _Work
+     int            invisible;
+     const char   **names;
+     int            unused;
++#ifdef DEV_EXE
++    void          *crate; /* Metal Gear Bandicoot: a caixa do Crash desenhada no lugar desta */
++#endif
+ } Work;
+ 
+ /*---------------------------------------------------------------------------*/
+@@ -102,6 +108,12 @@ static void Die(Work *work)
+     int          i;
+ 
+     GM_FreeObject((OBJECT *)&work->object);
++#ifdef DEV_EXE
++    if (work->crate)
++    {
++        GV_DestroyActor(work->crate);
++    }
++#endif
+ 
+     name = work->names;
+     for (i = 0; i < 2; i++)
+@@ -126,6 +138,9 @@ static int GetResources(Work *work, OBJECT *parent)
+     }
+ 
+     work->object.objs->objs[0].raise = 250;
++#ifdef DEV_EXE
++    work->crate = NewCrashCrate(work->object.objs, GM_Item - IT_Box1);
++#endif
+     GM_ConfigObjectRoot((OBJECT *)object, parent, 0);
+ 
+     name = &box_texture_names[(GM_Item - IT_Box1) * 2];
+diff --git a/source/equip/jpegcam.c b/source/equip/jpegcam.c
+index 69315f0..a47c56c 100644
+--- a/source/equip/jpegcam.c
++++ b/source/equip/jpegcam.c
+@@ -537,7 +537,11 @@ static void JpegTryCompressFrame(Work *work)
+         work->field_80 = 2;
+ 
+         // Not matching with a pointer to the global array
++#ifdef DEV_EXE
++        work->field_84 = (char *)PACK_ADDR1;
++#else
+         work->field_84 = (char *)0x801B1000;
++#endif
+         work->field_88 = (char *)0x801A1000;
+ 
+         work->field_8C_size = JpegCompressFrame(work, &rect, q_scale);
+diff --git a/source/game/item.c b/source/game/item.c
+index eb379ba..6b0a3ea 100644
+--- a/source/game/item.c
++++ b/source/game/item.c
+@@ -13,6 +13,9 @@
+ #include "libgcl/libgcl.h"
+ #include "game/game.h"
+ #include "strcode.h"
++#ifdef DEV_EXE
++#include "crash/crash.h"
++#endif
+ 
+ /*---------------------------------------------------------------------------*/
+ 
+@@ -37,6 +40,9 @@ typedef struct _Work
+     LINE_F4        text_line[2]; // lines around the item text
+     DG_PRIM       *shadow;
+     SVECTOR        shadow_verts[4];
++#ifdef DEV_EXE
++    void          *crash_crate;  // Metal Gear Bandicoot: a racao vira a caixa do Aku Aku
++#endif
+ } Work;
+ 
+ #define BODY_FLAG       ( DG_FLAG_TEXT | DG_FLAG_TRANS | DG_FLAG_SHADE \
+@@ -310,7 +316,13 @@ static void Act(Work *work)
+         }
+     }
+ 
++#ifdef DEV_EXE
++    /* a caixa do Aku Aku esconde o modelo da racao (DG_FLAG_NODRAW), e sem desenho o item acha que esta fora da
++       tela (bound_mode 0) e nem testa se o Crash encostou */
++    if ((work->state == 0) && (work->body.objs->bound_mode == 0) && (work->alive_time <= 0) && !work->crash_crate)
++#else
+     if ((work->state == 0) && (work->body.objs->bound_mode == 0) && (work->alive_time <= 0))
++#endif
+     {
+         return;
+     }
+@@ -403,6 +415,14 @@ static void Act(Work *work)
+         switch (work->type)
+         {
+         case 0:
++#ifdef DEV_EXE
++            if (work->crash_crate)
++            {
++                Crash_AkuGet(); /* mais uma mascara (a 3a: invencivel) no lugar da racao */
++                state = 1;
++                break;
++            }
++#endif
+             state = add_item(work->id, work->num);
+             break;
+ 
+@@ -541,6 +561,9 @@ static void Act(Work *work)
+ 
+ static void Die(Work *work)
+ {
++#ifdef DEV_EXE
++    Crash_CrateRelease(work->crash_crate);
++#endif
+     GM_FreeControl(&work->control);
+     GM_FreeObject((OBJECT *)&work->body);
+     GM_FreePrim(work->shadow);
+@@ -635,6 +658,9 @@ static int GetResources(Work *work, int name, int where)
+ 
+     GM_CurrentMap = where;
+     work->map = where;
++#ifdef DEV_EXE
++    work->crash_crate = NULL;
++#endif
+ 
+     control = &work->control;
+     if (GM_InitControl(control, name, where) < 0)
+@@ -777,6 +803,14 @@ static int GetResources(Work *work, int name, int where)
+ 
+     GM_ActControl(control);
+     GM_ActObject2((OBJECT *)body);
++#ifdef DEV_EXE
++    /* o item flutua `height` acima do chao; a caixa do Crash fica no chao */
++    if (work->type == 0 && work->id == IT_Ration)
++    {
++        work->crash_crate = Crash_ItemCrate(body->objs, height >= 0 ? -height : 0);
++        work->message = "AKU AKU";
++    }
++#endif
+     return 1;
+ }
+ 
+@@ -833,6 +867,9 @@ static int GetResourcesPut(Work *work, SVECTOR *pos, SVECTOR *step, ITEM_INFO *i
+     work->num = info->num;
+     work->message = info->message;
+     work->end_proc = 0;
++#ifdef DEV_EXE
++    work->crash_crate = NULL;
++#endif
+ 
+     if (!check_type(work, type))
+     {
+@@ -863,6 +900,13 @@ static int GetResourcesPut(Work *work, SVECTOR *pos, SVECTOR *step, ITEM_INFO *i
+         setLineF4(&work->text_line[i]);
+         setRGB0(&work->text_line[i], 255, 255, 255);
+     }
++#ifdef DEV_EXE
++    if (work->type == 0 && work->id == IT_Ration)
++    {
++        work->crash_crate = Crash_ItemCrate(work->body.objs, -100);
++        work->message = "AKU AKU";
++    }
++#endif
+ 
+     return 0;
+ }
+diff --git a/source/libdg/bound.c b/source/libdg/bound.c
+index 4749a72..f232c06 100644
+--- a/source/libdg/bound.c
++++ b/source/libdg/bound.c
+@@ -206,7 +206,11 @@ void DG_BoundChanl( DG_CHANL *chanl, int index )
+         flag = objs->flag;
+         bound_flag = 0;
+ 
++#ifdef DEV_EXE
++        if ( !( flag & ( DG_FLAG_INVISIBLE | DG_FLAG_NODRAW ) ) && ( objs->group_id == 0 || ( objs->group_id & group_id ) ) )
++#else
+         if ( !( flag & DG_FLAG_INVISIBLE ) && ( objs->group_id == 0 || ( objs->group_id & group_id ) ) )
++#endif
+         {
+             bound_flag = 2;
+ 
+diff --git a/source/libdg/chanl.c b/source/libdg/chanl.c
+index ffbad59..4c20695 100644
+--- a/source/libdg/chanl.c
++++ b/source/libdg/chanl.c
+@@ -368,6 +368,13 @@ void DG_StopMainChanlSystem( void )
+         DG_FreeObjsPacket( objs, 0 );
+         DG_FreeObjsPacket( objs, 1 );
+     }
++#ifdef DEV_EXE
++    {
++        /* Metal Gear Bandicoot: o Crash tambem devolve os pacotes antes de o radio usar a memoria toda */
++        extern void Crash_FreePackets( void );
++        Crash_FreePackets();
++    }
++#endif
+ }
+ 
+ void DG_RestartMainChanlSystem( void )
+diff --git a/source/libdg/libdg.h b/source/libdg/libdg.h
+index 2201d8e..6ca52da 100644
+--- a/source/libdg/libdg.h
++++ b/source/libdg/libdg.h
+@@ -106,6 +106,7 @@ enum {
+         DG_FLAG_AMBIENT         = 0x0100,       //
+         DG_FLAG_IRTEXTURE       = 0x0200,       //
+         DG_FLAG_ENVMAP          = 0x0400,       //
++        DG_FLAG_NODRAW          = 0x0800,       // Metal Gear Bandicoot: calcula, mas nao desenha
+ };
+ // clang-format on
+ 
+diff --git a/source/libgv/libgv.h b/source/libgv/libgv.h
+index 6e24479..308471c 100644
+--- a/source/libgv/libgv.h
++++ b/source/libgv/libgv.h
+@@ -155,7 +155,15 @@ int   GV_LoadInit( void *data, int name, int cache_mode );
+ 
+ /*------ Memory Management --------------------------------------------------*/
+ 
++#ifdef DEV_EXE
++/* Metal Gear Bandicoot: 2 x 24 KiB a menos de pacotes (o Dock inteiro usa ~100 KiB de 188 por metade, o radio
++   usa ~177 KiB das duas juntas) viram espaco para o Crash no executavel (a area residente comeca 48 KiB acima) */
++/* (teste 8: mais 2 x 6 KiB para o codigo da bazuca de Wumpa; o pior caso medido no Dock com 164 deixava 22 KiB
++   livres por metade) */
++#define PACK_SIZE       (158 * 1024)
++#else
+ #define PACK_SIZE       (188 * 1024) /* 188KiB */
++#endif
+ #define MEM_SIZE        (428 * 1024) /* 428KiB */
+ 
+ #define MEM_BOTTOM      ((void *)0x801E0000)

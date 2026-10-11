@@ -1,0 +1,39 @@
+# Nunca publicar: jogos, discos e tudo o que deriva deles.
+discs/*
+!discs/LEIA-ME.md
+
+# Clones de outros projetos: cada um tem o seu repositório (ver repos/LEIA-ME.md).
+# O que nós mudamos no mgs_reversing vai em mgs/ (patch + arquivos novos).
+repos/*
+!repos/LEIA-ME.md
+
+# O que sai dos discos do Crash: modelos, animações, texturas e sons dos jogos
+crash_assets/out/
+crash_assets/out_c3/
+crash_assets/improvisos/
+crash_assets/estudo/
+crash_assets/*_log.txt
+
+# Lado MGS: ambiente, ferramentas baixadas, o disco extraído, os discos montados e executáveis
+motor/.venv/
+motor/cache/
+motor/downloads/
+motor/tools/
+motor/disco_mgs/
+motor/out/
+motor/saves/
+*.exe
+
+# Dados do Crash gerados para dentro do MGS (nunca copiar para mgs/)
+crash_data.c
+crash_data.h
+
+# Material bruto do vídeo: todas as capturas e gravações. As escolhidas para o README estão em docs/img.
+diario/img/
+diario/clipes/
+
+# Estado do vigia dos dois Claudes (cópia das conversas)
+comunicacao/estado/
+
+__pycache__/
+*.pyc

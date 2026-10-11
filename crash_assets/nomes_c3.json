@@ -1,0 +1,506 @@
+{
+  "_aviso": "O Crash 3 não tem os scripts descompilados com nomes (o goocdump só cobre o Crash 1). Estes apelidos foram dados por nós (Claude 2), olhando a prévia de cada animação. 'certeza': 'alta' = inconfundível na prévia; 'media' = parece, mas falta ver em jogo. O nome de verdade de cada uma é o da entrada no disco (a chave). O 4º item, quando existe, é 'como tocar': medido nos próprios quadros (distância entre chaves), não deduzido.",
+  "Cr10V": [
+    "C3_PARADO",
+    "parado, respirando",
+    "alta",
+    "laço fechado."
+  ],
+  "Cr20V": [
+    "C3_PARADO_OLHANDO",
+    "parado, olha para os lados e se mexe (variação longa do parado)",
+    "media"
+  ],
+  "CC20V": [
+    "C3_COCA_A_CABECA",
+    "parado, coça a cabeça",
+    "alta"
+  ],
+  "Cy10V": [
+    "C3_IOIO",
+    "parado há muito tempo: brinca com um ioiô (o ioiô é o modelo Cy00G)",
+    "alta"
+  ],
+  "CrR0V": [
+    "C3_CORRER",
+    "corrida: ciclo inteiro (as duas pernas)",
+    "alta",
+    "laço fechado: depois do último quadro volta ao 0. Não espelhar."
+  ],
+  "CrW0V": [
+    "C3_ANDAR",
+    "andar: ciclo inteiro",
+    "alta",
+    "laço fechado (a última chave é quase a primeira). Não espelhar."
+  ],
+  "CrW2V": [
+    "C3_ANDAR_TRANSICAO_1",
+    "2 quadros de passagem do andar",
+    "media"
+  ],
+  "CrW3V": [
+    "C3_ANDAR_TRANSICAO_2",
+    "2 quadros de passagem do andar",
+    "media"
+  ],
+  "Ct10V": [
+    "C3_MEIA_VOLTA",
+    "freia e vira para o outro lado correndo",
+    "media"
+  ],
+  "CrS1V": [
+    "C3_DERRAPADA",
+    "a derrapada: desliza com os pés na frente",
+    "alta",
+    "chave 0 = entrada (vem da corrida); chaves 1 e 2 = a pose da derrapada (quase iguais: segurar a 2 enquanto desliza); chaves 3 e 4 = saindo; a 4 já é quase o agachado (emenda no C3_AGACHADO). NÃO segurar a última chave: ela é a saída, não a derrapada."
+  ],
+  "CrD1V": [
+    "C3_AGACHAR",
+    "descendo para agachar",
+    "alta",
+    "tocar 0 -> 2 uma vez; a chave 2 é igual ao C3_AGACHADO (diferença 4). Ao contrário para levantar: a chave 0 emenda no C3_PARADO."
+  ],
+  "CrD2V": [
+    "C3_AGACHADO",
+    "agachado, parado (1 quadro)",
+    "alta"
+  ],
+  "CCw1V": [
+    "C3_ENGATINHAR",
+    "engatinhando: as 9 chaves são MEIO ciclo (um braço e o joelho oposto avançam)",
+    "alta",
+    "MEIO CICLO ESPELHADO, como a corrida do Crash 1: tocar os quadros 0..toca-1 normais, depois os mesmos espelhados em x (x -> -x, invertendo o descarte de costas), e repetir. Medido: a última chave é o espelho da primeira (diferença de forma 19, contra 77 sem espelhar). Se voltar da última chave para a primeira sem espelhar, dá um tranco de 206 unidades."
+  ],
+  "CCw2V": [
+    "C3_ENGATINHAR_PARADO",
+    "TRANSIÇÃO de agachado para de quatro (2 chaves). O nome ficou, mas NÃO é o parado: é a passagem",
+    "alta",
+    "tocar UMA vez (chave 0 -> 1) ao deitar, e ao contrário ao levantar. NÃO pôr em laço: as 2 chaves ficam a 211 unidades uma da outra (a 0 é o C3_AGACHADO, a 1 é a chave 0 do C3_ENGATINHAR). Parado de quatro = segurar a chave 0 do C3_ENGATINHAR."
+  ],
+  "CfS1V": [
+    "C3_BARRIGADA_CHAO",
+    "a barrigada: cai de barriga e fica estatelado",
+    "alta"
+  ],
+  "CfS2V": [
+    "C3_BARRIGADA_AR_1",
+    "barrigada, no ar",
+    "media"
+  ],
+  "CfS3V": [
+    "C3_BARRIGADA_AR_2",
+    "barrigada, no ar",
+    "media"
+  ],
+  "CfS4V": [
+    "C3_BARRIGADA_AR_3",
+    "barrigada, no ar",
+    "media"
+  ],
+  "CfS5V": [
+    "C3_BARRIGADA_AR_4",
+    "barrigada, no ar",
+    "media"
+  ],
+  "CfS6V": [
+    "C3_LEVANTAR_DO_CHAO",
+    "estatelado no chão, se levanta",
+    "alta",
+    "uma vez: começa na última chave do C3_BARRIGADA_CHAO e termina no C3_PARADO."
+  ],
+  "CJS1V": [
+    "C3_PULO_SAIDA",
+    "sai do chão",
+    "alta"
+  ],
+  "CJU1V": [
+    "C3_PULO_SUBINDO",
+    "subindo",
+    "alta"
+  ],
+  "CJF1V": [
+    "C3_PULO_CAMBALHOTA",
+    "cambalhota no ar (o pulo duplo)",
+    "media"
+  ],
+  "CJL1V": [
+    "C3_PULO_POUSO",
+    "pousa e se recompõe",
+    "alta"
+  ],
+  "CJR1V": [
+    "C3_PULO_CORRENDO_1",
+    "pulo saindo da corrida",
+    "media"
+  ],
+  "CJR2V": [
+    "C3_PULO_CORRENDO_2",
+    "pulo saindo da corrida",
+    "media"
+  ],
+  "CJh1V": [
+    "C3_PULO_ALTO",
+    "pulo alto com cambalhota para trás",
+    "media"
+  ],
+  "CWD0V": [
+    "C3_GIRO_NO_AR",
+    "braços abertos girando no ar (parece o giro que plana)",
+    "media"
+  ],
+  "Ce10V": [
+    "C3_BEIRADA",
+    "se equilibrando na beirada, braços rodando",
+    "alta"
+  ],
+  "Ce20V": [
+    "C3_BEIRADA_SUSTO",
+    "2 quadros: leva um susto e abre os braços",
+    "media"
+  ],
+  "Ce30V": [
+    "C3_BEIRADA_VOLTA",
+    "volta da beirada",
+    "media"
+  ],
+  "Ce40V": [
+    "C3_BEIRADA_CAI",
+    "2 quadros: perde o equilíbrio",
+    "media"
+  ],
+  "CD10V": [
+    "C3_DANCA_1",
+    "a dança da vitória do Crash, parte 1",
+    "alta"
+  ],
+  "CD20V": [
+    "C3_DANCA_2",
+    "a dança da vitória do Crash, parte 2 (vira de costas e rebola)",
+    "alta"
+  ],
+  "CD30V": [
+    "C3_DANCA_3",
+    "a dança da vitória, final",
+    "alta"
+  ],
+  "Cp10V": [
+    "C3_COMEMORA",
+    "pula com os braços para cima",
+    "media"
+  ],
+  "CdPcV": [
+    "C3_PULA_ASSUSTADO",
+    "pulando no lugar com os braços para cima",
+    "media"
+  ],
+  "Cm10V": [
+    "C3_DERRUBADO_LEVANTA",
+    "leva um tranco, cai sentado de costas, sacode a cabeça e levanta",
+    "alta"
+  ],
+  "Cm1cV": [
+    "C3_DERRUBADO_FICA",
+    "leva um tranco e cai sentado",
+    "media"
+  ],
+  "Cd1iV": [
+    "C3_CAI_DE_CARA",
+    "amolece e cai de cara no chão",
+    "alta"
+  ],
+  "Co1iV": [
+    "C3_DESMAIA",
+    "bambeia e desmaia para trás",
+    "alta"
+  ],
+  "Cs1iV": [
+    "C3_ESCORREGA",
+    "escorrega e cai sentado (gelo)",
+    "alta"
+  ],
+  "Cs2iV": [
+    "C3_DESLIZA_DE_BARRIGA",
+    "deslizando de barriga (gelo)",
+    "media"
+  ],
+  "Cw62V": [
+    "C3_CAI_NO_BURACO",
+    "despenca rodando para longe (cair num buraco)",
+    "media"
+  ],
+  "WiBlV": [
+    "C3_GIRO",
+    "O GIRO: o tornado com a cabeça dele no meio (ainda se chama Willy Blow)",
+    "alta",
+    "laço de 10 quadros a 30 por segundo, SEM interpolar (a forma fecha: é um tornado girando; vértice a vértice não fecha, por isso laco.tipo diz 'aberto')."
+  ],
+  "WiBcV": [
+    "C3_GIRO_LEVE",
+    "o giro, versão com menos triângulos (modelo WiBcG)",
+    "alta",
+    "laço de 10 quadros a 30 por segundo, SEM interpolar (igual ao C3_GIRO)."
+  ],
+  "Cda0V": [
+    "C3_MORTE_ANJO",
+    "morte clássica: vira anjinho e sobe",
+    "alta"
+  ],
+  "CdA0V": [
+    "C3_MORTE_ANJO_2",
+    "o anjinho, segunda parte",
+    "media"
+  ],
+  "WF10V": [
+    "C3_MORTE_CINZAS",
+    "queimado: fica preto e desmancha em cinzas (ainda se chama Willy Fire)",
+    "alta"
+  ],
+  "CE10V": [
+    "C3_MORTE_OLHOS_E_TENIS",
+    "explodiu: só sobram os olhos e os tênis caindo",
+    "alta"
+  ],
+  "Cy00V": [
+    "C3_IOIO_OBJETO",
+    "o ioiô (objeto)",
+    "alta"
+  ],
+  "Cgt0V": [
+    "C3_BAZUCA_TIRO",
+    "o tronco com a bazuca no ombro. A chave 0 é a pose de MIRA; as 5 chaves são O TIRO: a bazuca dá um coice de 356 para trás e volta",
+    "alta",
+    "Mirando = SEGURAR a chave 0 (não pôr em laço: em laço a bazuca fica dando coice). Atirar = tocar 0 -> 4 uma vez (8 quadros); a chave 4 é idêntica à 0. O Crash da bazuca são DOIS modelos: pernas (Cgb0G) e tronco (Cgt0G). O tronco NÃO usa a raiz das pernas: desenhar cada vértice do tronco em especiais[0] da chave atual das PERNAS + vértice (a cintura; parado é (0, 399, -14)). Montado assim ele mede 1073 (o Crash inteiro mede 1000). A Wumpa nasce em especiais[2] do tronco (na mira: (-166, 460, 514) + cintura), no eixo do cano, e vai para +Z; especiais[1] é a outra ponta do eixo, atrás."
+  ],
+  "CgT0V": [
+    "C3_BAZUCA_SACA",
+    "o tronco sacando a bazuca das costas",
+    "alta",
+    "uma vez, chave 0 -> 5 (11 quadros); a última chave é a pose de mira (6 de diferença para a chave 0 do C3_BAZUCA_TIRO). Guardar = ao contrário. As pernas tocam C3_BAZUCA_PERNAS_SACA junto. O Crash da bazuca são DOIS modelos: pernas (Cgb0G) e tronco (Cgt0G). O tronco NÃO usa a raiz das pernas: desenhar cada vértice do tronco em especiais[0] da chave atual das PERNAS + vértice (a cintura; parado é (0, 399, -14)). Montado assim ele mede 1073 (o Crash inteiro mede 1000)."
+  ],
+  "Cgb0V": [
+    "C3_BAZUCA_PERNAS_TIRO",
+    "as pernas absorvendo o coice do tiro (par do C3_BAZUCA_TIRO: Cgt = em cima, Cgb = embaixo)",
+    "alta",
+    "uma vez, junto com o C3_BAZUCA_TIRO; começa na pose do PERNAS_PARADO (4 de diferença)."
+  ],
+  "CgB0V": [
+    "C3_BAZUCA_PERNAS_SACA",
+    "as pernas dando o pulinho de quando ele saca a bazuca (par do C3_BAZUCA_SACA: CgT em cima, CgB embaixo). A cintura sobe de 468 para 668 e volta",
+    "alta",
+    "uma vez, junto com o C3_BAZUCA_SACA."
+  ],
+  "Cs3bV": [
+    "C3_BAZUCA_PERNAS_PARADO",
+    "as pernas (calça e tênis) paradas: quase imóveis (12 de variação), cintura fixa em y = 399",
+    "alta",
+    "laço fechado. É o par da pose de mira."
+  ],
+  "Cs4bV": [
+    "C3_BAZUCA_PERNAS_ANDANDO",
+    "as pernas andando (ciclo inteiro; a cintura sobe e desce de 342 a 456). Sozinhas, parecem uma calça fugindo",
+    "alta",
+    "laço fechado."
+  ],
+  "Cs6bV": [
+    "C3_BAZUCA_PERNAS_PULO",
+    "as pernas num pulo alto (a cintura vai de 611 a 1694)",
+    "alta",
+    "uma vez (é o pulo com a bazuca na mão)."
+  ],
+  "_por_modelo": {
+    "BN10G": [
+      "C3_CAIXA_MADEIRA",
+      "a caixa de madeira. 6 faces (a do Crash 1 não tinha a de trás). Tem 8 caras: ver _variantes",
+      "alta"
+    ],
+    "BE10G": [
+      "C3_CAIXA_QUEBRANDO",
+      "a caixa se desfazendo em ripas",
+      "alta"
+    ],
+    "BT10G": [
+      "C3_CAIXA_TNT",
+      "TNT",
+      "alta"
+    ],
+    "BT20G": [
+      "C3_CAIXA_TNT_1",
+      "TNT, contagem: 1",
+      "alta"
+    ],
+    "BT30G": [
+      "C3_CAIXA_TNT_2",
+      "TNT, contagem: 2",
+      "alta"
+    ],
+    "BT40G": [
+      "C3_CAIXA_TNT_3",
+      "TNT, contagem: 3",
+      "alta"
+    ],
+    "BS10G": [
+      "C3_CAIXA_SETA",
+      "a caixa de seta (pula-pula), balançando",
+      "alta"
+    ],
+    "BF10G": [
+      "C3_CAIXA_LISTRADA",
+      "a caixa listrada (a que dá várias frutas), balançando",
+      "alta"
+    ],
+    "BS20G": [
+      "C3_CAIXA_FERRO_SETA",
+      "caixa de ferro com seta",
+      "alta"
+    ],
+    "BI10G": [
+      "C3_CAIXA_FERRO",
+      "caixa de ferro",
+      "alta"
+    ],
+    "Bi10G": [
+      "C3_CAIXA_FERRO_ABERTA",
+      "caixa de ferro, variação",
+      "media"
+    ],
+    "BA10G": [
+      "C3_CAIXA_FERRO_EXCLAMACAO",
+      "caixa de ferro com '!'",
+      "alta"
+    ],
+    "Ba10G": [
+      "C3_CAIXA_VERDE_EXCLAMACAO",
+      "caixa verde com '!' (a que detona as Nitro)",
+      "alta"
+    ],
+    "BG10G": [
+      "C3_CAIXA_CONTORNO",
+      "o contorno de caixa (a que ainda vai aparecer)",
+      "alta"
+    ],
+    "Bn10G": [
+      "C3_CAIXA_NITRO",
+      "NITRO",
+      "alta"
+    ],
+    "Bs10G": [
+      "C3_CAIXA_TRANCADA",
+      "caixa reforçada (só abre com a barrigada)",
+      "alta"
+    ],
+    "BC10G": [
+      "C3_CAIXA_CHECKPOINT",
+      "a caixa 'C' de checkpoint, abrindo",
+      "alta"
+    ],
+    "Bo10G": [
+      "C3_CAIXA_FERRO_C",
+      "caixa de ferro com 'C'",
+      "media"
+    ],
+    "Bl10G": [
+      "C3_CAIXA_CLARA",
+      "caixa de madeira clara",
+      "media"
+    ],
+    "Bc10G": [
+      "C3_RELOGIO",
+      "o relógio da corrida contra o tempo",
+      "alta"
+    ],
+    "WD10G": [
+      "C3_AKU_AKU",
+      "a máscara do Aku Aku",
+      "alta"
+    ],
+    "WD30G": [
+      "C3_AKU_AKU_DOURADO",
+      "o Aku Aku dourado (2ª máscara)",
+      "alta"
+    ],
+    "WD20G": [
+      "C3_AKU_AKU_PENA",
+      "a pena que cai quando ele leva um golpe",
+      "alta"
+    ],
+    "Sha0G": [
+      "C3_SOMBRA",
+      "a sombra redonda",
+      "alta"
+    ],
+    "Cry1G": [
+      "C3_CRISTAL",
+      "o cristal",
+      "alta"
+    ],
+    "Rel1G": [
+      "C3_RELIQUIA",
+      "a relíquia (ankh)",
+      "alta"
+    ],
+    "Ge10G": [
+      "C3_GEMA_1",
+      "gema",
+      "alta"
+    ],
+    "Ge30G": [
+      "C3_GEMA_3",
+      "gema",
+      "alta"
+    ],
+    "Ge40G": [
+      "C3_GEMA_4",
+      "gema",
+      "alta"
+    ],
+    "PI10G": [
+      "C3_ICONE_DE_PODER",
+      "o ícone de poder novo (ganho ao vencer um chefe)",
+      "media"
+    ]
+  },
+  "_variantes": [
+    {
+      "modelo": "BN10G",
+      "anim": "BN10V",
+      "cara": 1,
+      "nome": "C3_CAIXA_VIDA",
+      "descricao": "a caixa com a cara do Crash (vida)"
+    },
+    {
+      "modelo": "BN10G",
+      "anim": "BN10V",
+      "cara": 2,
+      "nome": "C3_CAIXA_INTERROGACAO",
+      "descricao": "a caixa '?'"
+    },
+    {
+      "modelo": "BN10G",
+      "anim": "BN10V",
+      "cara": 3,
+      "nome": "C3_CAIXA_AKU_AKU",
+      "descricao": "A CAIXA DO AKU AKU"
+    },
+    {
+      "modelo": "BN10G",
+      "anim": "BN10V",
+      "cara": 4,
+      "nome": "C3_CAIXA_TEMPO_1",
+      "descricao": "caixa dourada '1' (para o relógio 1 segundo)"
+    },
+    {
+      "modelo": "BN10G",
+      "anim": "BN10V",
+      "cara": 5,
+      "nome": "C3_CAIXA_TEMPO_2",
+      "descricao": "caixa dourada '2'"
+    },
+    {
+      "modelo": "BN10G",
+      "anim": "BN10V",
+      "cara": 6,
+      "nome": "C3_CAIXA_TEMPO_3",
+      "descricao": "caixa dourada '3'"
+    }
+  ]
+}

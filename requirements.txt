@@ -1,0 +1,6 @@
+# Extrator do Crash (crash_assets/) e robô de testes (motor/harness/)
+numpy
+Pillow
+# Só para a janela de jogo (motor/jogar.py)
+pygame
+# A compilação do Metal Gear Solid usa os requisitos do próprio mgs_reversing: repos/mgs_reversing/build/requirements.txt
