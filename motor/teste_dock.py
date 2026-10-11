@@ -28,9 +28,19 @@ def simbolos():
     return sym
 
 
-def ligar_no_dock(ps):
-    """Do boot até o controle do Snake no Loading Dock (seletor de fases do dev_exe: TITLE, D00A, S00A)."""
-    ps.run(1200)
+def pedir_seletor(ps, sym=None):
+    """Logo depois de ligar: pede o seletor de fases no lugar do título (o executável já está na RAM)."""
+    sym = sym or simbolos()
+    ps.run(30)
+    if 'MGB_SeletorDeFases' in sym:
+        ps.w32(sym['MGB_SeletorDeFases'], 1)
+
+
+def ligar_no_dock(ps, sym=None):
+    """Do boot até o controle do Snake no Loading Dock (seletor de fases do dev_exe: TITLE, D00A, S00A).
+    Desde o teste 10 o jogo abre no título; o seletor só aparece com MGB_SeletorDeFases = 1 antes do título."""
+    pedir_seletor(ps, sym)
+    ps.run(1170)
     for _ in range(2):
         ps.press(['DOWN'], 2, 8)
     ps.run(5)

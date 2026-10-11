@@ -10,6 +10,8 @@ Um projeto de **[mrxploud](https://github.com/mrxploud)** ([ByteMirage](https://
 
 [**Discord**](https://discord.com/invite/4H5hGwVnPn) · [**YouTube (ByteMirage)**](https://www.youtube.com/@ByteMirage) · [**Baixar o projeto (.zip)**](https://github.com/mrxploud/Metal-Gear-Bandicoot/archive/refs/heads/main.zip)
 
+> **Para jogar:** monte os discos com os passos de [Como rodar](#como-rodar) (com as suas cópias dos jogos) e dê **dois cliques no [`JOGAR.bat`](JOGAR.bat)**. Ele abre a fusão na tela de título, com som, teclado e controle.
+
 No [Sonic Mirage](https://github.com/mrxploud/Sonic-Mirage), a fusão anterior, os dois jogos rodavam lado a lado em emuladores e nenhum foi aberto. Aqui é o contrário: **os dois jogos foram abertos por dentro.** O Metal Gear Solid é recompilado a partir da descompilação dele, com código novo dentro; o Crash é tirado do disco dele, vértice por vértice, e desenhado no lugar do Snake.
 
 ![A bazuca de Wumpa acertando um guarda](docs/img/17_bazuca_no_mgs.png)
@@ -23,7 +25,7 @@ Em dezembro de 2018, **u/Max_Comix** postou no r/crashbandicoot um desenho antig
 Oito anos depois, mrxploud achou o post por acaso, enquanto escolhia dois jogos de PS1 já descompilados para a próxima fusão, e decidiu realizar o sonho daquele post. A caixa do Crash, o "WOAH!" e o resto estão aqui.
 
 > [!WARNING]
-> **Este projeto não está finalizado.** Só o Loading Dock (a primeira área do jogo) tem o Crash funcionando, o lado do Metal Gear Solid ainda está em andamento, e os testes 6, 7 e 8 foram conferidos só pelo robô de testes. A lista honesta do que funciona e do que não funciona está [mais abaixo](#estado-atual).
+> **Este projeto não está finalizado.** O lado do Metal Gear Solid ainda está em andamento. A lista do que funciona e do que não funciona está [mais abaixo](#estado-atual).
 
 > [!IMPORTANT]
 > **Este repositório não contém jogos, discos, BIOS nem emuladores**, só código e capturas de tela. Também não contém nada tirado dos discos (modelos, animações, texturas, sons): o extrator está aqui, o que ele extrai não. Para rodar você precisa das suas próprias cópias dos três discos, nas versões exatas listadas em [`discs/LEIA-ME.md`](discs/LEIA-ME.md).
@@ -46,10 +48,11 @@ Oito anos depois, mrxploud achou o post por acaso, enquanto escolhia dois jogos 
 
 ## Estado atual
 
-O retrato é o do **teste 8** (11/10/2026). mrxploud foi jogando as versões e cada rodada dele virou o teste seguinte; a última rodada registrada no diário é a do teste 5. Os consertos e as novidades dos testes 6, 7 e 8 foram conferidos pelo robô de testes (um emulador dirigido por script).
+O retrato é o do **teste 10** (11/10/2026). mrxploud foi jogando as versões e cada rodada dele virou o teste seguinte.
 
 ### Funciona
 
+- **O jogo inteiro com o Crash.** O jogo abre na tela de título do Metal Gear Solid (Novo Jogo e cartão de memória), e as 92 áreas dos dois discos carregam com o Crash: do Loading Dock e do Heliporto até o REX, o Liquid e a fuga. Quando o jogo pede o disco 2, o `jogar.py` troca sozinho.
 - **O Crash do _Crash Bandicoot 3: Warped_ no lugar do Snake**, no Loading Dock, com as animações do próprio jogo dele: parado (respira e olha em volta), correndo, agachado, **engatinhando**, **derrapando**, o giro, o susto ao levar tiro e a morte.
 - **A caixa do Crash** no lugar da caixa de papelão: A é a de madeira, B a "?" e C a TNT. O Crash some dentro dela.
 - **A TNT:** com a caixa C parada no caminho, o guarda chuta; ela desliza contando 3, 2, 1 e explode.
@@ -57,11 +60,12 @@ O retrato é o do **teste 8** (11/10/2026). mrxploud foi jogando as versões e c
 - **O giro derruba quem estiver em volta**, não só na frente. A derrapada também derruba.
 - **Aku Aku:** as três rações do Dock viraram caixas do Aku Aku. A primeira máscara absorve um tiro, a dourada dois, e a terceira vai para o rosto do Crash: 20 segundos invencível, e guarda que encostar cai.
 - **A bazuca de Wumpa:** segurar o botão da arma saca a bazuca (dá para andar mirando), soltar atira uma Wumpa que voa reto; o guarda que ela acertar leva o golpe e cambaleia.
+- **O pulo do Warped:** pulo (mais alto segurando o botão), pulo duplo com a cambalhota, pulo longo saindo da derrapada e o giro no ar. Agachar é de segurar, como no Crash.
 - Rádio, primeira pessoa, pausa e menus do Metal Gear Solid continuam funcionando.
 
 ### Não funciona ou não foi feito
 
-- **Só o Loading Dock.** As outras áreas do jogo existem na descompilação, mas ninguém levou o Crash até lá.
+- **O "WOAH!", o grito e a TNT em 33 das 92 áreas.** Nelas (entre outras: o Cânion, a Torre de Comunicação, o laboratório, a sala do Psycho Mantis, o REX e o Liquid) o código é o original do Metal Gear Solid, ajustado ao nosso executável, porque a descompilação ainda não terminou essas áreas. Lá os guardas mostram o "!" e o grito de sempre, e o chute na caixa é o do MGS. O Crash em si (giro, pulo, bazuca, Aku Aku, caixas) funciona em todas.
 - Sem tela de título própria e sem o Game Over "CRASH? CRAAASH!".
 - Os guardas continuam sendo os do Metal Gear Solid (a ideia de virarem os assistentes de laboratório do Cortex ficou no papel).
 - A Wumpa da bazuca não quebra caixa.
@@ -72,6 +76,8 @@ O retrato é o do **teste 8** (11/10/2026). mrxploud foi jogando as versões e c
 
 ### Limitações conhecidas
 
+- **Em algumas áreas pesadas o jogo fica um pouco mais lento que o original** (no Tank Hangar, por exemplo): desenhar o Crash custa processamento.
+- **O `jogar.py` usa a CPU interpretada do PCSX ReARMed.** A recompilada (`--rapido`) é mais leve, mas fecha o emulador na cena da chegada ao Heliporto.
 - **A memória do PlayStation (2 MB) está no limite.** No pior caso medido no Dock sobram 16 KB. A bazuca não cabe na memória fixa: ela é lida do CD quando o Crash saca (a primeira vez demora um instante) e devolvida 10 segundos depois de guardada.
 - **Duas texturas não são o dado do disco:** a cara do Aku Aku na caixa e a Wumpa têm 256 cores no Warped e foram reduzidas para 16, porque a área de vídeo livre do Metal Gear Solid não comporta uma paleta de 256. A redução é nossa.
 - Três sons (o "Woah!", o giro e o bipe da TNT) ainda vêm do Crash 1; o resto vem do Warped.
@@ -95,7 +101,7 @@ Onde as regras dos dois jogos não se encontram, foi preciso escolher:
 Testado apenas em **Windows 11**, com **Python 3.12**. São mais passos que no Sonic Mirage, porque aqui um jogo é extraído e o outro é recompilado.
 
 > [!NOTE]
-> Os passos 3, 4 e 6 são do lado do Metal Gear Solid, que ainda está em andamento. Eles descrevem o caminho usado até o teste 8 e vão ser revisados.
+> Os passos 3, 4 e 6 são do lado do Metal Gear Solid. Eles são o caminho usado até o teste 10 (revisados pelo Claude 1).
 
 ### 0. Baixar
 
@@ -113,17 +119,39 @@ pip install -r requirements.txt
 
 ### 2. Os discos
 
-Três discos de PlayStation, em `.bin` + `.cue`, nas versões exatas de [`discs/LEIA-ME.md`](discs/LEIA-ME.md):
+Quatro discos de PlayStation, em `.bin` + `.cue`, nas versões exatas de [`discs/LEIA-ME.md`](discs/LEIA-ME.md):
 
 | Jogo | Código |
 |---|---|
 | Metal Gear Solid: Integral, disco 1 (Japão) | SLPM-86247 |
+| Metal Gear Solid: Integral, disco 2 (Japão), para jogar depois da troca de disco | SLPM-86248 |
 | Crash Bandicoot 3: Warped (Europa) | SCES-01420 |
 | Crash Bandicoot (EUA) | SCUS-94900 |
 
 ### 3. A descompilação do Metal Gear Solid
 
-Clone os projetos de [`repos/LEIA-ME.md`](repos/LEIA-ME.md) dentro de `repos/`, prepare o `mgs_reversing` como o README dele ensina (compilador PsyQ, requisitos do `build/`) e aplique as nossas mudanças como está em [`mgs/LEIA-ME.md`](mgs/LEIA-ME.md).
+Clone os projetos de [`repos/LEIA-ME.md`](repos/LEIA-ME.md) dentro de `repos/`, nos commits de lá. O `psyq_sdk` (o
+compilador) fica ao lado do `mgs_reversing`, em `repos/psyq_sdk`, que é onde o `build.py` dele procura. Depois, os
+requisitos da compilação e as nossas mudanças (o mesmo que [`mgs/LEIA-ME.md`](mgs/LEIA-ME.md) explica):
+
+```bash
+pip install -r repos/mgs_reversing/build/requirements.txt
+cd repos/mgs_reversing
+git checkout f54dbb2a58adfc2755403296c9ebb653fbec277b
+git apply ../../mgs/metal-gear-bandicoot.patch
+cp -r ../../mgs/source/crash source/
+cp ../../mgs/build/finalize_dev_overlay.py build/
+cd build
+python build.py
+cd ../../..
+```
+
+O `python build.py` sem variante compila o jogo original e confere byte a byte contra o disco: além de provar que
+tudo está no lugar, ele deixa o mapa do executável de 1999 (`obj/asm.map`), que o montador usa para ajustar ao nosso
+executável o código das áreas que a descompilação ainda não terminou.
+
+A compilação roda no Windows sem WSL nem Docker; o `ninja` vem do `pip` (use o mesmo ambiente Python nos passos
+seguintes).
 
 ### 4. Ferramentas
 
@@ -147,22 +175,35 @@ O primeiro grava `crash_assets/out_c3/` (292 animações, 90 modelos, 394 sons, 
 ### 6. Empacotar, compilar e montar o disco
 
 ```bash
+python -I motor/montar_disco.py --disco "discs/<pasta do MGS Integral>/<...>.cue" --so-extrair
 python -I motor/empacotar_crash3.py
 cd repos/mgs_reversing/build
 python build.py --variant=dev_exe
 cd ../../..
-python -I motor/montar_disco.py --disco "discs/<pasta do MGS Integral>/<...>.cue"
+python -I motor/montar_disco.py --disco "discs/<pasta do MGS Integral disco 1>/<...>.cue"
+python -I motor/montar_disco.py --numero 2 --disco "discs/<pasta do MGS Integral disco 2>/<...>.cue" --saida motor/out/mgb_d2
 ```
 
-O primeiro comando escreve os dados do Crash em C para dentro do `mgs_reversing`; o último troca o executável do disco original pelo nosso e grava `motor/out/mgb.cue`.
+1. Extrai o disco original do MGS para `motor/disco_mgs/` (uma vez só; o empacotador precisa do `BRF.DAT` de lá).
+2. Escreve os dados do Crash em C para dentro do `mgs_reversing` (`source/crash/crash_data.c` e `.h`) e grava
+   `motor/out/crash_cd.bin`: a textura, as paletas, os sons e o bloco da bazuca, que vão para um arquivo novo no
+   disco (`MGS/MGB.DAT`) e são lidos do CD durante o jogo (não cabem na memória fixa do PlayStation).
+3. Compila a variante `dev_exe`: o nosso executável e o código de cada área ligado a ele. Sem a variante, o
+   `build.py` gera o jogo original, byte a byte.
+4. Monta cada disco a partir do original: o código de cada área (compilado, ou o original ajustado ao nosso
+   executável quando a área ainda não foi descompilada), o nosso executável (`MGS/MGB.EXE`) e os dados do Crash
+   (`MGS/MGB.DAT`). Todo arquivo do Metal Gear Solid fica no mesmo setor do disco original. Grava `motor/out/mgb.cue`,
+   `mgb_d2.cue` e a lista `mgb.m3u` com os dois.
 
 ### 7. Jogar
+
+Dois cliques no **`JOGAR.bat`**, ou:
 
 ```bash
 python -I motor/jogar.py
 ```
 
-A janela abre com som e entra sozinha no Loading Dock. `--menu` para no seletor de fases do modo de desenvolvimento. O disco montado também abre em qualquer emulador de PlayStation.
+A janela abre com som na tela de título do Metal Gear Solid: Novo Jogo, ou continuar do cartão de memória (que fica em `motor/saves/`). Com os dois discos montados, o programa troca de disco sozinho quando o jogo pede (depois é só apertar Start). `--dock` entra direto no Loading Dock e `--menu` para no seletor de fases do modo de desenvolvimento. Os discos montados também abrem em qualquer emulador de PlayStation (o `mgb.m3u` carrega os dois).
 
 ---
 
@@ -171,15 +212,17 @@ A janela abre com som e entra sozinha no Loading Dock. `--menu` para no seletor 
 | Teclado | Controle (Xbox) | No PS1 | No jogo |
 |---|---|---|---|
 | setas | direcional / analógico | direcional | andar e correr |
-| Z | A | X | agachar; com direção, deitar e **engatinhar**; correndo + Z, **derrapar** |
+| Z | A | X | **pular**; no ar, soltar e apertar de novo: **pulo duplo** (com a cambalhota do Warped) |
+| W | RB | R1 | **agachar** enquanto segurar; com direção, **engatinhar**; correndo + W, **derrapar**; derrapando + Z, **pulo longo** |
 | X | B | bolinha | **o giro do Crash** |
 | A | X | quadrado | segurar: **sacar a bazuca**; soltar: atirar uma Wumpa |
 | S | Y | triângulo | primeira pessoa |
-| Q / W | LB / RB | L1 / R1 | L1 tira ou põe o último item |
+| Q | LB | L1 | tira ou põe o último item |
 | E / R | LT / RT | L2 / R2 | menu de itens (as caixas do Crash estão aqui) / menu de armas |
 | Enter | Start | Start | pausa |
 | Backspace | Back | Select | rádio |
 | F5 / F7 | | | salvar / carregar estado |
+| F9 | | | trocar de disco (o programa já troca sozinho quando o jogo pede) |
 | F12 | | | foto (vai para `diario/img/`) |
 | Esc | | | sair |
 
@@ -361,6 +404,22 @@ Aqui a lição do teste 5 foi aplicada antes do bug: medindo antes de responder,
 
 O som do tiro também foi achado sem ouvir: o script da bazuca cita três sons, e eles existem exatamente nas mesmas 15 fases em que a bazuca existe. Qual dos três é o disparo foi decidido pelo formato da onda.
 
+### 15. O elevador e o jogo inteiro
+
+No teste 9, mrxploud jogou, gostou e achou o fim da linha: **o jogo travava depois do elevador do Loading Dock**, na cena da chegada ao Heliporto. Até ali o Crash só existia no Dock: para caber na memória, o executável trazia embutido só o código dos personagens daquela área, um atalho do modo de desenvolvimento da descompilação. O elevador leva a cenas e áreas que chamam outros personagens, e eles não estavam lá.
+
+A correção foi fazer como o jogo original: carregar do disco o código de cada área quando o jogador chega nela. Só que esse código foi feito em 1999 para o executável de 1999, e o nosso é outro: o Crash mora dentro dele, e quase tudo mudou de endereço. Das 92 áreas do jogo, 59 são recompiladas a partir da descompilação. As outras 33 não dá para recompilar: 13 ninguém descompilou ainda (entre elas a Passagem Subterrânea, o Hind D, o REX e o Liquid), e 20 ainda guardam endereços de 1999 escritos como número. Para essas, um programa novo pega o código original do disco e reescreve, uma por uma, as instruções e os ponteiros que apontam para o executável. Para conferir, ele foi aplicado também às áreas que o compilador gera inteiras, e o resultado saiu idêntico byte a byte.
+
+![O Crash no Heliporto, depois do elevador](docs/img/19_heliporto.png)
+
+*O Crash no Heliporto, num jogo começado pela tela de título: depois do elevador, das duas cenas e dos dois rádios da chegada.*
+
+Para dar para zerar faltavam três coisas que o modo de desenvolvimento não tinha: a **tela de título** (ele abria sempre no seletor de fases), o **cartão de memória** guardado entre uma sessão e outra e o **disco 2**. O executável do Integral é o mesmo arquivo nos dois discos, e o código das áreas também; então o disco 2 da fusão é o disco 2 original com as mesmas peças, e o `jogar.py` troca de disco sozinho na tela em que o jogo pede.
+
+![O Crash no disco 2](docs/img/20_disco_2.png)
+
+*O disco 2: o jogo pediu a troca, o disco entrou e o Crash seguiu no corredor da área seguinte.*
+
 ### O que essa jornada ensinou
 
 - **Nome não é prova. Prévia não é prova. Medida é.** O giro que não era `FLIP`, a bazuca que eram pernas, o laço que era meio ciclo, a mira que era coice: todo erro de dados deste projeto veio de descrever uma coisa pelo nome ou pela aparência. Os que foram medidos antes não viraram bug.
@@ -399,8 +458,10 @@ crash_assets/      o lado Crash
   testes/            o teste com o CD de mentira
 motor/             o lado Metal Gear Solid
   empacotar_crash3.py  escreve o Crash em C para dentro do jogo
-  montar_disco.py      troca o executável do disco original pelo nosso
-  jogar.py             a janela de jogo
+  montar_disco.py      monta os discos 1 e 2 com o nosso executável e o código de cada área
+  relocar.py           ajusta ao nosso executável o código original das áreas ainda não descompiladas
+  overlays.py          escolhe, área por área, o código compilado ou o original ajustado
+  jogar.py             a janela de jogo (o JOGAR.bat chama ele)
   harness/             o robô de testes
 mgs/               o que mudamos no Metal Gear Solid (patch + arquivos novos)
 diario/            a linha do tempo, os bugs e as ideias, com hora e prova

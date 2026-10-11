@@ -14,7 +14,7 @@ import diag  # noqa: E402
 from PIL import Image  # noqa: E402
 
 ACOES = [['LEFT'], ['RIGHT'], ['UP'], ['DOWN'], ['UP', 'LEFT'], ['DOWN', 'RIGHT'], ['CIRCLE'], ['CROSS'], [], ['SQUARE'], ['SQUARE', 'LEFT'],
-         ['TRIANGLE']]
+         ['TRIANGLE'], ['R1'], ['R1', 'UP'], ['CROSS', 'UP']]   # teste 9: X pula, R1 agacha
 
 
 def main():

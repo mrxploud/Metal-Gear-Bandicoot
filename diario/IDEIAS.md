@@ -51,3 +51,9 @@
 | No vídeo: a caixa do Crash 1 não tem a parte de trás. Em 1996 ninguém ia ver; em 2026, dentro do Metal Gear, a câmera deu a volta e o ByteMirage viu | ByteMirage (achou jogando), C2 (mediu) | vídeo |
 | No vídeo: a lição que o C2 anotou duas vezes ("nome não é prova, prévia é") ganhou um terceiro degrau: **prévia também não é prova, medida é**. O engatinhar parecia um laço na folha de contato | C2 | vídeo |
 | Caixa do Aku Aku no lugar das caixas de item, e a 3ª máscara dá invencibilidade com "toque da morte" (encostar no guarda derruba) | **ByteMirage** (pedido do teste 5) | teste 6 |
+| **Destaque escolhido pelo ByteMirage:** a cena em que o guarda chuta a caixa de TNT (3, 2, 1, "WOAH!", bum). Palavras dele em 11/10: "achei engraçado da TNT onde ele chuta kkkkkk". Entra no vídeo com certeza | **ByteMirage** (reação ao ver o projeto); a cena é do C1, teste 4 | vídeo: `diario/clipes/20261011_0840_c1_TNT_chutada_woah_bum.gif` |
+
+| Pular em cima do guarda (o ataque clássico do Crash): caindo em cima, ele cai. Dá para fazer com um golpe para baixo enquanto o Crash desce | C1 (depois do pulo) | levar ao ByteMirage |
+| Agachado + X = o pulo alto com cambalhota para trás do Warped (`C3_PULO_ALTO`, já extraído pelo C2); e deitar/levantar do engatinhar mais rápidos (hoje ~0,5 s cada, é a animação do Snake deitado) | C1 | levar ao ByteMirage |
+| O "WOAH!" também nas 33 áreas com o código original do MGS: achar no módulo relocado as funções da marca ("!") e desviar as chamadas para as do executável (que já desenham o "WOAH!"). Dá para fazer igual com o grito do guarda | C1 (teste 10) |
+| Descobrir por que o recompilador do PCSX ReARMed fecha o emulador na cena do Heliporto da fusão (com ele o jogador ficaria mais leve em PC fraco) | C1 (teste 10) |

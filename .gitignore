@@ -13,6 +13,8 @@ crash_assets/out_c3/
 crash_assets/improvisos/
 crash_assets/estudo/
 crash_assets/*_log.txt
+# Imagens do modelo do Crash geradas para o vídeo (video_pecas.py): também saem do disco do Warped
+crash_assets/video/
 
 # Lado MGS: ambiente, ferramentas baixadas, o disco extraído, os discos montados e executáveis
 motor/.venv/
@@ -37,3 +39,6 @@ comunicacao/estado/
 
 __pycache__/
 *.pyc
+
+# Conversas dos Claudes coladas pelo ByteMirage (não são do projeto público)
+sess*o do claude *.txt

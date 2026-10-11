@@ -26,6 +26,11 @@
 #include "libhzd/libhzd.h"
 #include "bullet/blast.h"
 
+/* Os dados do Crash moram no MGS/MGB.DAT desde o teste 10. Antes iam no fim de uma copia do BRF.DAT, o que tirava
+ * todos os arquivos seguintes do MGS do lugar no disco; agora cada um fica no setor do disco original (precaucao).
+ * O empacotador ainda numera os setores a partir do BRF.DAT; aqui eles viram setores dentro do MGB.DAT. */
+#define MGB_SETOR(s) ((s) - CRASH_CD_SETOR)
+
 #define N_BUCKETS   64
 #define NV_PAD      ((CRASH_NV_MAX + 2) / 3 * 3)
 #define MAX_PACKS   360 /* triangulos visiveis por quadro (o pior caso medido do Crash 3 foi 330) */
@@ -63,6 +68,7 @@ typedef struct _Work
     int      baz_clock;
     int      baz_depois;/* quadros desde o tiro */
     int      baz_ocioso;/* quadros guardada (a memoria volta depois de BAZ_OCIOSO) */
+    int      pulo_ant;  /* crash_pulo do quadro anterior (o pulo duplo recomeca a cambalhota) */
 } Work;
 
 /* buffers do quadro atual (estaticos: o callback roda dentro do motor) */
@@ -71,8 +77,10 @@ static long          crash_sxy[NV_PAD];
 static long          crash_sz[NV_PAD];
 static short         crash_head[N_BUCKETS];
 static short         crash_next[CRASH_NT_MAX];
-static unsigned char crash_kA[CRASH_NV_MAX * 3];
-static unsigned char crash_kB[CRASH_NV_MAX * 3];
+/* as duas chaves decodificadas (um byte por eixo) moram nos buffers da tela: a decodificacao termina antes de o
+ * DrawModel transformar (economiza 1,8 KB de memoria fixa, para o pulo caber) */
+#define crash_kA ((unsigned char *)crash_sz)
+#define crash_kB ((unsigned char *)crash_sxy)
 #define AKU_NV_PAD 36
 #define AKU_NT     27
 static SVECTOR       aku_verts[AKU_NV_PAD];
@@ -87,6 +95,8 @@ int crash_dbg_frame;   /* quadro da animacao em uso (+100 quando espelhado) */
 int crash_slide;       /* derrapada: quadros que faltam (o estado de derrapar do sna_init.c escreve a cada quadro) */
 int crash_aku;         /* mascaras do Aku Aku (0, 1 ou 2): cada uma absorve um golpe */
 int crash_aku_inv;     /* quadros de invencibilidade que faltam (a 3a mascara); o sna_init.c le */
+int crash_pulo;        /* no ar: 1 = pulo, 2 = pulo duplo (o estado de pular do sna_init.c escreve a cada quadro) */
+int crash_no_ar;       /* altura dos pes acima do chao num pulo (o sna_init.c escreve depois de mover o Snake) */
 
 #define AKU_INV_TEMPO 600 /* 20 s, como no Warped */
 
@@ -97,6 +107,7 @@ static int   crash_boom; /* quadros desde que uma TNT explodiu perto do Crash (m
 void        Crash_Woah(void);
 static void PlaySound(int ofs, int pitch, int vol);
 static void CdLoadStep(Work *work);
+static int  CdLivre(void);
 static int   crash_in_crate; /* 1 enquanto o Snake usa uma caixa: o Crash esta dentro dela */
 DG_PRIM     *crash_dbg_crate; /* (robo de testes) */
 
@@ -116,8 +127,8 @@ static FONTE       fonte_baz;
 
 /*---------------------------------------------------------------------------*/
 /* Quadros-chave do Crash 3: cada vertice = vertice anterior + base fixa + diferenca de poucos bits (o numero de
- * bits e por vertice e eixo, igual em todo o modelo). A fila de bits vem em palavras de 32 bits, do bit mais
- * alto para o mais baixo. Sem perda: o mesmo byte por eixo que o Warped guarda. */
+ * bits e por vertice e eixo, em meio byte, igual em todas as chaves que dividem a tabela). A fila de bits vem em
+ * palavras de 32 bits, do bit mais alto para o mais baixo. Sem perda: o mesmo byte por eixo que o Warped guarda. */
 static void DecodeKey(const FONTE *f, const CRASH_MODEL *mdl, int key, unsigned char *out, short *org)
 {
     const unsigned long *k = &f->keys[f->key_ofs[key] >> 2];
@@ -138,7 +149,7 @@ static void DecodeKey(const FONTE *f, const CRASH_MODEL *mdl, int key, unsigned 
     eixo = 0;
     for (i = 0; i < n; i++)
     {
-        b = bits[i];
+        b = (bits[i >> 1] >> ((i & 1) << 2)) & 15;
         val = 0;
         if (b)
         {
@@ -511,16 +522,40 @@ static void SetAnim(Work *work, int anim, int reverse)
     work->clock = 0;
 }
 
+#define NO_PULO(a) ((a) == CRASH_A_PULO_SAIDA || (a) == CRASH_A_PULO_SUBINDO || (a) == CRASH_A_PULO_CAMBALHOTA)
+
 static void Animate(Work *work)
 {
     const CRASH_ANIM *an;
-    int               want, action, last, pausa;
+    int               want, action, last, pausa, pulo;
 
     action = work->body->action;
     want = AnimForAction(work, action);
     crash_slide_resto = crash_slide;
     crash_slide = 0; /* vale so para este quadro: o estado de derrapar escreve de novo no proximo */
+    pulo = crash_pulo;
+    crash_pulo = 0;  /* idem, o estado de pular */
     pausa = 0;
+
+    /* o pulo do Warped: sai do chao e sobe de bracos para cima (segura a ultima pose ate pousar); o pulo duplo e a
+     * cambalhota, que comeca e termina nessa mesma pose. Pousou parado: o pouso; andando, ja sai correndo */
+    if (pulo)
+    {
+        if (pulo == 2 && work->pulo_ant != 2)
+        {
+            SetAnim(work, CRASH_A_PULO_CAMBALHOTA, 0);
+        }
+        want = NO_PULO(work->anim) ? work->anim : CRASH_A_PULO_SAIDA;
+    }
+    else if (NO_PULO(work->anim) && want == CRASH_A_PARADO)
+    {
+        want = CRASH_A_PULO_POUSO;
+    }
+    work->pulo_ant = pulo;
+    if (want == CRASH_A_PARADO && work->anim == CRASH_A_PULO_POUSO)
+    {
+        want = CRASH_A_PULO_POUSO; /* termina de se recompor (sai antes se andar) */
+    }
 
     /* sem vida: a morte e para sempre (a acao do Snake muda durante o GAME OVER) */
     if (GM_Vitality <= 0 || action == -1)
@@ -604,9 +639,12 @@ static void Animate(Work *work)
                 work->mirror ^= 1; /* meio ciclo: a outra mao (perna) na frente */
             }
         }
-        else if (work->anim == CRASH_A_AGACHAR)
+        else if (work->anim == CRASH_A_AGACHAR || work->anim == CRASH_A_PULO_SAIDA || work->anim == CRASH_A_PULO_POUSO)
         {
-            SetAnim(work, CRASH_A_AGACHADO, 0);
+            /* agachar segura o agachado; saiu do chao, sobe; pousou, fica parado */
+            SetAnim(work, work->anim == CRASH_A_AGACHAR     ? CRASH_A_AGACHADO
+                          : work->anim == CRASH_A_PULO_SAIDA ? CRASH_A_PULO_SUBINDO
+                                                             : CRASH_A_PARADO, 0);
             an = &crash_anims[work->anim];
             last = an->toca - 1;
         }
@@ -924,12 +962,12 @@ static void BazAct(Work *work, int permitido)
     {
     case 0:
         /* primeira vez: le o bloco da bazuca do CD (so depois da textura e dos sons da fase) */
-        if (quer && work->cd_state == 4 && CDBIOS_TaskState() == CDBIOS_STATE_IDLE)
+        if (quer && work->cd_state == 4 && CdLivre())
         {
             work->baz_buf = GV_Malloc(CRASH_CD_BYTES_BAZUCA);
             if (work->baz_buf)
             {
-                FS_LoadFileRequest(FS_FILE_BRF, CRASH_CD_SETOR_BAZUCA, CRASH_CD_BYTES_BAZUCA, work->baz_buf);
+                FS_LoadFileRequest(FS_FILE_MGB, MGB_SETOR(CRASH_CD_SETOR_BAZUCA), CRASH_CD_BYTES_BAZUCA, work->baz_buf);
                 work->baz = 1;
             }
         }
@@ -1076,11 +1114,11 @@ static void Act(Work *work)
     }
     /* a matriz da raiz do Snake fica na cintura (chao + 1100 em pe, 496 agachado, 136 deitado); o Crash tem os
      * pes em y = 0, entao a origem vai para a altura do chao debaixo dele (achado do Claude 2 depois que o
-     * ByteMirage viu o Crash flutuando) */
+     * ByteMirage viu o Crash flutuando); no pulo, mais a altura dos pes acima do chao */
     work->prim->world = objs->world;
     if (GM_PlayerControl)
     {
-        work->prim->world.t[1] = GM_PlayerControl->levels[0];
+        work->prim->world.t[1] = GM_PlayerControl->levels[0] + crash_no_ar;
         crash_dbg_cintura = GM_PlayerControl->mov.vy - GM_PlayerControl->levels[0];
     }
     crash_dbg_action = work->body->action;
@@ -1239,9 +1277,18 @@ void Crash_Woah(void)
     crash_dbg_woah++;
 }
 
-/* Texturas, paletas e sons ficam no fim do BRF.DAT (o briefing nao e usado no modo dev): lidos uma vez por
- * fase para um buffer temporario, mandados para a VRAM e a SPU, e o buffer volta para a memoria. Assim
- * esses 19 KB nao ocupam a RAM do executavel. Sem travar: espera o leitor de CD ficar livre. */
+/* O leitor de CD e a SPU sao do MGS enquanto uma fala, um radio ou uma demo toca do CD (stream): entre um bloco
+ * e outro o leitor fica parado, e o nosso pedido de leitura podia entrar no meio do stream (teste 10: a chegada
+ * ao Heliporto, uma demo com fala, nao terminava na fusao). */
+static int CdLivre(void)
+{
+    return CDBIOS_TaskState() == CDBIOS_STATE_IDLE && FS_StreamTaskState() == 0 &&
+           !(GM_GameStatus & STATE_VOX_STREAM);
+}
+
+/* Texturas, paletas e sons ficam no MGS/MGB.DAT: lidos uma vez por fase para um buffer temporario, mandados para
+ * a VRAM e a SPU, e o buffer volta para a memoria. Assim esses 19 KB nao ocupam a RAM do executavel. Sem travar:
+ * espera o leitor de CD ficar livre. */
 static void CdLoadStep(Work *work)
 {
     RECT           rect, pal;
@@ -1252,7 +1299,7 @@ static void CdLoadStep(Work *work)
     case 0:
     case 2:
         /* dois pedacos (textura + paletas; sons), um de cada vez: o maior bloco livre da memoria normal e ~50 KB */
-        if (CDBIOS_TaskState() != CDBIOS_STATE_IDLE)
+        if (!CdLivre())
         {
             return;
         }
@@ -1263,19 +1310,19 @@ static void CdLoadStep(Work *work)
         }
         if (work->cd_state == 0)
         {
-            FS_LoadFileRequest(FS_FILE_BRF, CRASH_CD_SETOR, CRASH_CD_BYTES, work->cd_buf);
+            FS_LoadFileRequest(FS_FILE_MGB, MGB_SETOR(CRASH_CD_SETOR), CRASH_CD_BYTES, work->cd_buf);
         }
         else
         {
-            FS_LoadFileRequest(FS_FILE_BRF, CRASH_CD_SETOR_SONS, CRASH_CD_BYTES_SONS, work->cd_buf);
+            FS_LoadFileRequest(FS_FILE_MGB, MGB_SETOR(CRASH_CD_SETOR_SONS), CRASH_CD_BYTES_SONS, work->cd_buf);
         }
         work->cd_state++;
         return;
 
     case 3:
-        if (FS_LoadFileSync() > 0)
+        if (FS_LoadFileSync() > 0 || !CdLivre())
         {
-            return;
+            return; /* a SPU tambem e do driver enquanto ele toca uma fala do CD */
         }
         SpuSetTransferStartAddr(CRASH_SPU_ADDR);
         SpuWrite(work->cd_buf, CRASH_SONS_BYTES);

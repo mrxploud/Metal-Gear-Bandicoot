@@ -39,7 +39,8 @@ OPCOES = {
 
 
 class PSX:
-    def __init__(self, game, options=None, log=False):
+    def __init__(self, game, options=None, log=False, saves=None):
+        """saves: pasta do cartão de memória e afins (padrão motor/saves)."""
         opts = dict(OPCOES)
         opts.update(options or {})
         self.log_lines = []
@@ -49,7 +50,7 @@ class PSX:
             if log:
                 print('[core]', msg)
 
-        self.core = retro.Core(CORE, os.path.join(MOTOR, 'sys'), os.path.join(MOTOR, 'saves'), opts, _log)
+        self.core = retro.Core(CORE, os.path.join(MOTOR, 'sys'), saves or os.path.join(MOTOR, 'saves'), opts, _log)
         self.core.load(game)
         mem = self.core.memory(retro.MEMORY_SYSTEM_RAM)
         if not mem:

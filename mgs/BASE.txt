@@ -1,5 +1,5 @@
 repositorio: https://github.com/FoxdieTeam/mgs_reversing.git
 commit: f54dbb2a58adfc2755403296c9ebb653fbec277b
 ramo local: metal-gear-bandicoot
-arquivos mudados: 12
-arquivos novos: 2
+arquivos mudados: 21
+arquivos novos: 3

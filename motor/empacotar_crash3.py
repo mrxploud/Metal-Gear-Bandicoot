@@ -42,7 +42,23 @@ ANIMS = [
     ('C3_MORTE_OLHOS_E_TENIS', 'MORRER_TNT', 0, 1),   # explosão: sobram os olhos e os tênis
     ('C3_AKU_AKU', 'AKU', 0, 0),                      # a máscara (1 chave), segue o Crash
     ('C3_AKU_AKU_DOURADO', 'AKU_OURO', 0, 0),         # a 2a máscara
+    # o pulo (pedido do ByteMirage depois do teste 8): sai do chão, sobe de braços para cima, cambalhota no alto (como
+    # no Warped; começa e termina na pose de subir) e o pouso, que termina na pose de parado
+    ('C3_PULO_SAIDA', 'PULO_SAIDA', 0, 0),
+    ('C3_PULO_SUBINDO', 'PULO_SUBINDO', 0, 0),
+    ('C3_PULO_CAMBALHOTA', 'PULO_CAMBALHOTA', 0, 0),
+    ('C3_PULO_POUSO', 'PULO_POUSO', 0, 0),
 ]
+# Tabelas de bits por grupo de animações. Cada vértice gasta os bits da maior diferença entre TODAS as chaves que
+# dividem a tabela, e a cambalhota (o corpo girando) alargava a tabela do Cr10G inteiro. Sozinha, cada animação
+# precisa de bem menos (o parado, 3,4 bits por vértice; a tabela única, 10,9), mas cada tabela a mais custa 1.373 bytes
+# (base + bits em meio byte). Grupos achados juntando, de dois em dois, os que mais economizavam: o mesmo Crash, sem
+# perda, ~4 KB menor (para o pulo caber na memória). O que não está aqui fica na tabela do próprio modelo.
+GRUPO_DE_BITS = {
+    'C3_PARADO': 'parado',
+    'C3_AGACHAR': 'agachar', 'C3_AGACHADO': 'agachar', 'C3_PULO_POUSO': 'agachar',
+    'C3_PULO_SAIDA': 'pulo', 'C3_PULO_SUBINDO': 'pulo', 'C3_PULO_CAMBALHOTA': 'pulo',
+}
 # o ponto do rosto (especiais[1]) por chave, para a máscara ir para a cara na invencibilidade (MGB #36 do Claude 2:
 # medido em todas as animações do Cr10G); no giro (outro modelo) vale o nº 0, em cima da cabeça
 ROSTO = {'Cr10G': 1, 'WiBcG': 0}
@@ -157,12 +173,23 @@ def codificar(xyz, n, base, nbits, origem):
                 acc_bits &= (1 << nb) - 1
     if nb:
         palavras.append((acc_bits << (32 - nb)) & 0xFFFFFFFF)
-    palavras.append(0)                              # o leitor pode olhar uma palavra adiante
+    # o leitor pode olhar uma palavra adiante: as chaves vêm coladas (ele lê a origem da próxima, sem efeito) e quem
+    # junta as chaves põe uma palavra 0 depois da última (FOLGA)
     return struct.pack('<hhhh', origem[0], origem[1], origem[2], 0) + struct.pack('<%dI' % len(palavras), *palavras)
+
+
+FOLGA = bytes(4)
+
+
+def meio_byte(nbits):
+    """Os bits por vértice e eixo (0..8) em meio byte: dois por byte, o primeiro embaixo."""
+    nb = list(nbits) + [0] * (len(nbits) & 1)
+    return [nb[i] | (nb[i + 1] << 4) for i in range(0, len(nb), 2)]
 
 
 def decodificar(rec, n, base, nbits):
     """O mesmo que o C faz (conferência)."""
+    rec = rec + FOLGA
     pal = struct.unpack_from('<%dI' % ((len(rec) - 8) // 4), rec, 8)
     w, cur, resto = 0, pal[0], 32
     w = 1
@@ -342,7 +369,7 @@ def bloco_bazuca(c3, tex_do_material, fator):
         esc = [round(k[e] * fator * 4096) for e in range(3)]
         ofs = [poe(struct.pack('<%dH' % len(t['tris']), *t['tris'])), poe(bytes(t['tri_mat'])), poe(bytes(t['flags'])),
                poe(struct.pack('<%dH' % len(t['mat_tex']), *t['mat_tex'])), poe(bytes(t['cantos'])),
-               poe(bytes(t['cores'])), poe(bytes(t['base'])), poe(bytes(t['bits']))]
+               poe(bytes(t['cores'])), poe(bytes(t['base'])), poe(bytes(meio_byte(t['bits'])))]
         desc.append(struct.pack('<HHiii8I', md['vertices'], len(md['triangulos']), esc[0], esc[1], esc[2], *ofs))
     chaves, anims = bytearray(), bytearray()
     key_ofs = []
@@ -367,7 +394,7 @@ def bloco_bazuca(c3, tex_do_material, fator):
     o_anims = poe(bytes(anims))
     o_pontos = poe(struct.pack('<%dh' % len(pontos), *pontos))
     o_kofs = poe(struct.pack('<%dI' % len(key_ofs), *key_ofs))
-    o_keys = poe(bytes(chaves))
+    o_keys = poe(bytes(chaves) + FOLGA)
     blob = b'BAZ2' + struct.pack('<HHIIIII', len(mods), len(BAZUCA), o_anims, o_kofs, o_keys, len(key_ofs), o_pontos)
     blob += b''.join(desc) + bytes(corpo)
     print('bazuca: %d modelos (%s), %d animações, %d chaves, %.1f KB no CD'
@@ -483,7 +510,8 @@ def main():
          '#include "crash_data.h"', '']
 
     # ---- modelos do Crash 3 e quadros-chave ----
-    chaves_por_modelo = {mn: [] for mn in modelos}
+    # variantes: a mesma malha com outra tabela de bits (GRUPO_DE_BITS); cada uma vira um CRASH_MODEL
+    variantes, chaves_por_var = [], {}
     for nome, curto, laco, levantar in ANIMS:
         info = c3.anims[nome]
         q = ler_cru(os.path.join(OUT3, info['cru']['arquivo']))
@@ -495,21 +523,23 @@ def main():
                     o = (o[0], o[1] + int(math.ceil(-miny / ky)), o[2])
                 q[i] = (o, xyz)
         info['_q'] = q
-        chaves_por_modelo[info['modelo']] += q
+        var = (info['modelo'], GRUPO_DE_BITS.get(nome, ''))
+        if var not in variantes:
+            variantes.append(var)
+            chaves_por_var[var] = []
+        chaves_por_var[var] += q
 
-    tabela_mod = {}
+    tabela_mod, malha = {}, {}
     nv_max = nt_max = 0
     for mi, mn in enumerate(modelos):
         md = c3.m['modelos'][mn]
         n = md['vertices']
-        base, nbits = tabela_do_modelo(chaves_por_modelo[mn], n)
-        tabela_mod[mn] = (base, nbits)
         k = None
         for nome, _, _, _ in ANIMS:
             if c3.anims[nome]['modelo'] == mn:
                 k = c3.anims[nome]['cru']['k']
                 break
-        esc = [round(k[e] * fator * 4096) for e in range(3)]
+        malha[mn] = (mi, [round(k[e] * fator * 4096) for e in range(3)])
         tris, mats = md['triangulos'], md['materiais']
         nv_max, nt_max = max(nv_max, n), max(nt_max, len(tris))
         flags, mtex = [], []
@@ -531,23 +561,25 @@ def main():
         c.append('static const unsigned short m%d_mat_tex[] = {\n%s\n};' % (mi, bloco(mtex, 15)))
         c.append('static const unsigned char m%d_cantos[] = {\n%s\n};' % (mi, bloco(cantos, 18)))
         c.append('static const unsigned char m%d_cores[] = {\n%s\n};' % (mi, bloco([v for cc in cores for v in cc], 18)))
-        c.append('static const unsigned char m%d_base[] = {\n%s\n};' % (mi, bloco(base, 18)))
-        c.append('static const unsigned char m%d_bits[] = {\n%s\n};' % (mi, bloco(nbits, 18)))
-        tabela_mod[mn] = (base, nbits, esc, mi)
+    for vi, var in enumerate(variantes):
+        base, nbits = tabela_do_modelo(chaves_por_var[var], c3.m['modelos'][var[0]]['vertices'])
+        c.append('static const unsigned char v%d_base[] = {\n%s\n};' % (vi, bloco(base, 18)))
+        c.append('static const unsigned char v%d_bits[] = {\n%s\n};' % (vi, bloco(meio_byte(nbits), 18)))
+        tabela_mod[var] = (base, nbits, vi)
     c.append('const CRASH_MODEL crash_models[CRASH_NMODELS] = {')
-    for mi, mn in enumerate(modelos):
+    for vi, (mn, grupo) in enumerate(variantes):
         md = c3.m['modelos'][mn]
-        esc = tabela_mod[mn][2]
+        mi, esc = malha[mn]
         c.append('    { %d, %d, { %d, %d, %d }, m%d_tris, m%d_tri_mat, m%d_flags, m%d_mat_tex, m%d_cantos, m%d_cores, '
-                 'm%d_base, m%d_bits }, /* %s */' % (md['vertices'], len(md['triangulos']), esc[0], esc[1], esc[2],
-                                                     mi, mi, mi, mi, mi, mi, mi, mi, mn))
+                 'v%d_base, v%d_bits }, /* %s%s */' % (md['vertices'], len(md['triangulos']), esc[0], esc[1], esc[2],
+                                                      mi, mi, mi, mi, mi, mi, vi, vi, mn, ' ' + grupo if grupo else ''))
     c.append('};')
 
     blob, ofs, tabela = bytearray(), [], []
     for nome, curto, laco, levantar in ANIMS:
         info = c3.anims[nome]
         mn = info['modelo']
-        base, nbits, esc, mi = tabela_mod[mn]
+        base, nbits, vi = tabela_mod[(mn, GRUPO_DE_BITS.get(nome, ''))]
         n = c3.m['modelos'][mn]['vertices']
         primeiro = len(ofs)
         for (o, xyz) in info['_q']:
@@ -555,7 +587,8 @@ def main():
             assert decodificar(rec, n, base, nbits) == xyz[:n * 3], nome
             ofs.append(len(blob))
             blob += rec
-        tabela.append((curto, mi, len(info['_q']), info['toca'], 1 if info['interpola'] else 0, laco, primeiro, nome))
+        tabela.append((curto, vi, len(info['_q']), info['toca'], 1 if info['interpola'] else 0, laco, primeiro, nome))
+    blob += FOLGA
     # o ponto do rosto por chave (unidades do MGS, no espaço do modelo, como os vértices)
     rosto = []
     for nome, curto, laco, levantar in ANIMS:
@@ -631,7 +664,7 @@ def main():
     brf_setor = (os.path.getsize(BRF_ORIGINAL) + 2047) // 2048
 
     h = ['/* GERADO por motor/empacotar_crash3.py. Nao editar a mao. */', '#ifndef CRASH_DATA_H', '#define CRASH_DATA_H', '',
-         '#define CRASH_NMODELS %d' % len(modelos), '#define CRASH_NANIMS %d' % len(tabela), '#define CRASH_NKEYS %d' % len(ofs),
+         '#define CRASH_NMODELS %d' % len(variantes), '#define CRASH_NANIMS %d' % len(tabela), '#define CRASH_NKEYS %d' % len(ofs),
          '#define CRASH_NV_MAX %d' % nv_max, '#define CRASH_NT_MAX %d' % nt_max, '#define CRASH_CULL (1)', '',
          '#define CRASH_ATLAS_X %d' % VRAM_TPAGE_X, '#define CRASH_ATLAS_Y %d' % VRAM_TPAGE_Y,
          '#define CRASH_ATLAS_W %d' % (ATLAS_LARGURA // 4), '#define CRASH_ATLAS_H %d' % alt_atlas,
@@ -670,7 +703,7 @@ def main():
           '    const unsigned char  *cantos;     /* 3 indices de cor por triangulo */',
           '    const unsigned char  *cores;      /* r, g, b (a luz ja vem pintada) */',
           '    const unsigned char  *base;       /* por vertice e eixo: soma fixa */',
-          '    const unsigned char  *bits;       /* por vertice e eixo: bits da diferenca (com sinal) */',
+          '    const unsigned char  *bits;       /* por vertice e eixo: bits da diferenca (com sinal), meio byte cada */',
           '} CRASH_MODEL;', '',
           'typedef struct {', '    unsigned char  model, nkeys, toca, interp, loop;', '    unsigned short first;', '} CRASH_ANIM;', '']
     for i, t in enumerate(tabela):
@@ -690,9 +723,8 @@ def main():
         tam_mod += len(md['triangulos']) * 10 + len(md['materiais']) * 11 + len(md['cores']) * 3 + md['vertices'] * 6
     print('%d animações, %d chaves: %.1f KB de quadros (sem perda) + %.1f KB de modelos; CD %.1f KB (atlas %dx%d, %d paletas)'
           % (len(tabela), len(ofs), len(blob) / 1024, tam_mod / 1024, len(cd) / 1024, ATLAS_LARGURA, alt_atlas, clut_marca + 1))
-    for mn in modelos:
-        _, nbits, _, _ = tabela_mod[mn]
-        print('  %s: %.1f bits por vértice' % (mn, sum(nbits) / (len(nbits) / 3)))
+    for (mn, grupo), (_, nbits, _) in tabela_mod.items():
+        print('  %s%s: %.1f bits por vértice' % (mn, ' ' + grupo if grupo else '', sum(nbits) / (len(nbits) / 3)))
 
 
 if __name__ == '__main__':

@@ -26,8 +26,21 @@ ENV_EXPERIMENTAL = 0x10000
  ENV_GET_LANGUAGE, ENV_SET_MESSAGE_EXT) = 2, 3, 6, 9, 10, 11, 15, 16, 17, 27, 30, 31, 36, 39, 60
 
 
+ENV_SET_DISK_CONTROL_INTERFACE = 13  # Metal Gear Bandicoot: a troca de disco (o MGS tem dois)
+
+
 class GameInfo(C.Structure):
     _fields_ = [('path', C.c_char_p), ('data', C.c_void_p), ('size', C.c_size_t), ('meta', C.c_char_p)]
+
+
+class DiskControl(C.Structure):
+    _fields_ = [('set_eject_state', C.CFUNCTYPE(C.c_bool, C.c_bool)),
+                ('get_eject_state', C.CFUNCTYPE(C.c_bool)),
+                ('get_image_index', C.CFUNCTYPE(C.c_uint)),
+                ('set_image_index', C.CFUNCTYPE(C.c_bool, C.c_uint)),
+                ('get_num_images', C.CFUNCTYPE(C.c_uint)),
+                ('replace_image_index', C.CFUNCTYPE(C.c_bool, C.c_uint, C.POINTER(GameInfo))),
+                ('add_image_index', C.CFUNCTYPE(C.c_bool))]
 
 
 class SystemInfo(C.Structure):
@@ -179,6 +192,7 @@ class Core:
         self.descriptors = []
         self.memory_map = []
         self.messages = []
+        self.disk = None
         self.pixel_format = PIXEL_0RGB1555
         self.pressed = set()
         self.frame = None
@@ -268,6 +282,8 @@ class Core:
             self.memory_map = [dict(flags=d.flags, ptr=d.ptr, start=d.start, len=d.len, offset=d.offset,
                                     select=d.select, name=(d.addrspace or b'').decode())
                                for d in (mm.descriptors[i] for i in range(mm.num_descriptors))]
+        elif cmd == ENV_SET_DISK_CONTROL_INTERFACE:
+            self.disk = DiskControl.from_buffer_copy(C.cast(data, C.POINTER(DiskControl))[0])
         elif cmd in (ENV_SET_MESSAGE, ENV_SET_MESSAGE_EXT):
             msg = C.cast(data, C.POINTER(Message))[0].msg
             if msg:
@@ -316,6 +332,30 @@ class Core:
 
     def reset(self):
         self.lib.retro_reset()
+
+    # --- discos (um .m3u carrega vários; o núcleo troca pela interface de disco) -------
+    def num_disks(self):
+        return self.disk.get_num_images() if self.disk else 1
+
+    def disk_index(self):
+        return self.disk.get_image_index() if self.disk else 0
+
+    def set_tray_open(self, aberta):
+        if not self.disk:
+            raise RuntimeError('o núcleo não ofereceu a interface de disco')
+        return self.disk.set_eject_state(aberta)
+
+    def insert_disk(self, indice):
+        """Com a tampa aberta, põe o disco `indice` do .m3u."""
+        if not self.disk:
+            raise RuntimeError('o núcleo não ofereceu a interface de disco')
+        return self.disk.set_image_index(indice)
+
+    def save_ram(self):
+        """O cartão de memória 1 (o núcleo guarda nele; quem salva no arquivo é o programa)."""
+        ptr = self.lib.retro_get_memory_data(MEMORY_SAVE_RAM)
+        n = self.lib.retro_get_memory_size(MEMORY_SAVE_RAM)
+        return (C.c_ubyte * n).from_address(ptr) if ptr and n else None
 
     def close(self):
         self.lib.retro_unload_game()
