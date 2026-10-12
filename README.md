@@ -48,7 +48,7 @@ Oito anos depois, mrxploud achou o post por acaso, enquanto escolhia dois jogos 
 
 ## Estado atual
 
-O retrato é o do **teste 10** (11/10/2026). mrxploud foi jogando as versões e cada rodada dele virou o teste seguinte.
+O retrato é o do **teste 11** (11/10/2026). mrxploud foi jogando as versões e cada rodada dele virou o teste seguinte.
 
 ### Funciona
 
@@ -419,6 +419,8 @@ Para dar para zerar faltavam três coisas que o modo de desenvolvimento não tin
 ![O Crash no disco 2](docs/img/20_disco_2.png)
 
 *O disco 2: o jogo pediu a troca, o disco entrou e o Crash seguiu no corredor da área seguinte.*
+
+Jogando o teste 10, mrxploud achou mais dois: o som do jogo sumia, e a cena do elevador voltou a travar. Era o mesmo bug. O chip de som do PlayStation tem 24 vozes, e o Metal Gear Solid usa todas: 13 para a música, 8 para os efeitos, 2 para as falas e a última como **relógio**. Essa voz toca silêncio em laço, e cada volta acorda o programa de som do jogo. Os sons do Crash tinham ido justamente para essa voz, que parecia livre. O primeiro "Woah!" parava o relógio: a música e os efeitos sumiam, e a fala da cena do elevador ficava esperando para sempre. Agora o Crash tem uma voz dele, e o Metal Gear toca efeitos com 7 vozes em vez de 8.
 
 ### O que essa jornada ensinou
 

@@ -128,6 +128,27 @@ def worker(args):
             ligar_no_dock(ps)
         sample("dock", True)
         ps.save_state(str(output / "dock.state"))
+        if args.girar:
+            # Sons do Crash antes do elevador (o giro toca o som dele). Até o teste 10 eles paravam o relógio do
+            # driver de som do MGS: o som do jogo sumia e a cena do elevador travava.
+            import numpy as np
+            ps.core.audio = []
+
+            def volume(segundos):
+                ps.run(60 * segundos)
+                a = np.frombuffer(b"".join(ps.core.audio), dtype=np.int16)
+                ps.core.audio.clear()
+                return int(np.abs(a).max()) if len(a) else 0
+            antes = volume(4)
+            for _ in range(args.girar):
+                ps.press(["CIRCLE"], 4, 40)
+            ps.run(60 * 6)          # o som do próprio giro e o eco passam; o que sobra é o som do jogo
+            ps.core.audio.clear()
+            depois = volume(6)
+            ps.core.audio = None
+            print("som do jogo: antes dos giros %d, depois %d" % (antes, depois), flush=True)
+            if depois < antes // 4:
+                raise RuntimeError("o som do jogo sumiu depois dos sons do Crash")
         control = ps.u32(symbols["GM_PlayerControl"])
         ps.w16(control, 0)
         ps.w16(control + 4, -26000)
@@ -190,6 +211,7 @@ def main():
     parser.add_argument("--estado", help="retoma uma cutscene já salva em vez de fazer o trajeto")
     parser.add_argument("--segundos", type=int, default=300)
     parser.add_argument("--timeout", type=int, default=180, help="limite real do subprocesso")
+    parser.add_argument("--girar", type=int, default=0, help="giros do Crash (com som) no Dock antes do elevador")
     parser.add_argument("--novo-jogo", action="store_true",
                         help="chega ao Dock pelo título (Novo Jogo), como um jogador, em vez do seletor de fases")
     parser.add_argument("--interpretador", action="store_true",

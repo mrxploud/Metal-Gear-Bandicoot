@@ -6,7 +6,7 @@
 motor\.venv\Scripts\python.exe -I motor\jogar.py
 ```
 
-O comando é sempre o mesmo: ele abre sozinho **o teste mais novo** (hoje o **teste 10**, em `motor\out\teste10`), com
+O comando é sempre o mesmo: ele abre sozinho **o teste mais novo** (hoje o **teste 11**, em `motor\out\teste11`), com
 os dois discos. Para abrir um teste antigo: `--disco motor\out\teste9\mgb.cue`. Não precisa de BIOS de PS1: o
 emulador (PCSX ReARMed) tem uma embutida.
 
@@ -19,6 +19,17 @@ no Loading Dock (como era até o teste 9) e `--menu` para no seletor de fases do
 - **Trocar de disco**: quando o jogo pede o disco 2, o programa troca sozinho (o título da janela avisa); é só
   apertar **Start (Enter)**, como pede a tela. **F9** troca à mão.
 - **F5 / F7** salvam e carregam o estado na hora (um por teste).
+
+## O que mudou no teste 11: o som do jogo e o elevador de novo
+
+- **Consertado: o som do jogo sumia e o elevador travava de novo** (achado do ByteMirage no teste 10). Os sons do
+  Crash tocavam na voz 23 do chip de som, e a voz 23 é o **relógio** do som do Metal Gear: ela toca silêncio em laço e
+  cada volta faz o som do jogo andar. O primeiro som do Crash (o giro, o "Woah!", a bazuca) parava esse relógio: a
+  música e os efeitos sumiam, e a próxima cena com fala (a do elevador) ficava esperando a voz para sempre. Agora o
+  Crash tem a voz dele (a 20) e o Metal Gear fica com 7 vozes de efeito em vez de 8.
+- **Consertado: o `jogar.py` não tocava nos alto-falantes.** Ele abria o primeiro dispositivo de som da lista do
+  Windows (no seu PC, a saída digital S/PDIF). Agora toca no dispositivo padrão, o mesmo dos outros programas.
+- As cenas continuam pulando com **Start (Enter)**, como no MGS.
 
 ## O que mudou no teste 10: o jogo inteiro
 

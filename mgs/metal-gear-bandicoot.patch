@@ -1191,3 +1191,50 @@ index 16c0db3..825710e 100644
              {
                  weapon_id = GM_Weapon;
  
+diff --git a/source/sound/sd_cli.c b/source/sound/sd_cli.c
+index 53d295d..7dd9603 100644
+--- a/source/sound/sd_cli.c
++++ b/source/sound/sd_cli.c
+@@ -10,6 +10,15 @@
+ 
+ extern SETBL *se_header;
+ 
++#ifdef DEV_EXE
++/* Metal Gear Bandicoot: the last sound-effect slot (track 20 = SPU voice 20) is reserved for the
++ * sounds of Crash. Voice 23 is the driver's clock (it loops blank_data to raise the SPU IRQ that
++ * drives the sound task and the voice streams), so Crash must never play on it. */
++#define SE_VAGAS 7
++#else
++#define SE_VAGAS 8
++#endif
++
+ int sd_task_active(void)
+ {
+     if (sd_task_status & 0x80)
+@@ -165,7 +174,7 @@ int SePlay(int sound_code)
+         }
+         priority = 256;
+         j = 0;
+-        for (i = 0; i < 8; i++)
++        for (i = 0; i < SE_VAGAS; i++)
+         {
+             if (((se_playing[i].code & 0xFF) == sound_code) && !se_request[i].code)
+             {
+@@ -198,7 +207,7 @@ int SePlay(int sound_code)
+ 
+         if (j != i)
+         {
+-            for (i = 0; i < 8; i++)
++            for (i = 0; i < SE_VAGAS; i++)
+             {
+                 if ((se_playing[i].code != 0) ||
+                      (se_request[i].code != 0))
+@@ -212,7 +221,7 @@ int SePlay(int sound_code)
+ 
+             if (j != i)
+             {
+-                for (i = 0; i < 8; i++)
++                for (i = 0; i < SE_VAGAS; i++)
+                 {
+                     if (se_request[i].code == 0)
+                     {

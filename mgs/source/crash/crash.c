@@ -1190,10 +1190,13 @@ static void Die(Work *work)
 }
 
 /*---------------------------------------------------------------------------*/
-/* Sons do Crash: o ADPCM vai para um buraco livre da memoria de som e toca na voz 23, que o driver do MGS
- * nao usa (ele mexe nas vozes 0 a 22). Tom 0x400 = 11025 Hz; a voz do Crash sorteia de 0x39A a 0x466. */
+/* Sons do Crash: o ADPCM vai para um buraco livre da memoria de som e toca na voz 20, que o driver do MGS deixa
+ * para nos (sd_cli.c: 7 vagas de efeito em vez de 8). Ate o teste 10 era a voz 23, que e o relogio do driver: ela
+ * toca silencio em laco e gera a interrupcao da SPU que faz o som do jogo andar. O primeiro som do Crash parava o
+ * relogio: a musica e os efeitos sumiam e a proxima cena com fala travava (o elevador do Dock).
+ * Tom 0x400 = 11025 Hz; a voz do Crash sorteia de 0x39A a 0x466. */
 
-#define CRASH_VOZ SPU_VOICECH(23)
+#define CRASH_VOZ SPU_VOICECH(20)
 
 extern void AN_SetMarkTextures(u_short b_mark, u_short q_mark);
 

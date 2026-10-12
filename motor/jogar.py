@@ -29,10 +29,8 @@ Teclado                     Controle (Xbox)        PS1
   Esc                         -                      sair
 """
 import argparse
-import collections
 import os
 import sys
-import threading
 import time
 
 import numpy as np
@@ -56,45 +54,36 @@ BOTOES_CONTROLE = {0: 'CROSS', 1: 'CIRCLE', 2: 'SQUARE', 3: 'TRIANGLE', 4: 'L1',
 
 
 class Som:
-    """Fila de áudio do emulador tocada pelo SDL (pygame._sdl2.audio)."""
+    """Áudio do emulador tocado pelo mixer do pygame, que fica no dispositivo de som padrão do Windows.
+
+    Até o teste 10 o programa abria o primeiro dispositivo da lista do SDL, e ele pode ser uma saída sem nada ligado:
+    no PC do ByteMirage era o "Áudio Digital (S/PDIF)", e o jogo ficava mudo nos alto-falantes."""
+
+    BLOCO = 0.05    # segundos de som por pedaço entregue ao mixer
 
     def __init__(self, taxa):
-        from pygame._sdl2.audio import AudioDevice, AUDIO_S16, AUDIO_ALLOW_FORMAT_CHANGE, get_audio_device_names
-        nomes = get_audio_device_names(False)
-        if not nomes:
+        taxa = int(taxa)
+        if pygame.mixer.get_init() != (taxa, -16, 2):
+            pygame.mixer.quit()
+            pygame.mixer.init(frequency=taxa, size=-16, channels=2, buffer=1024)
+        if not pygame.mixer.get_init():
             raise RuntimeError('nenhuma saída de som')
-        self.fila = collections.deque()
-        self.pendente = 0
-        self.trava = threading.Lock()
-        self.dev = AudioDevice(devicename=nomes[0], iscapture=False, frequency=int(taxa), audioformat=AUDIO_S16,
-                               numchannels=2, chunksize=1024, allowed_changes=AUDIO_ALLOW_FORMAT_CHANGE,
-                               callback=self._callback)
-        self.dev.pause(0)
-
-    def _callback(self, dev, mem):
-        n = len(mem)
-        out = bytearray(n)
-        pos = 0
-        with self.trava:
-            while pos < n and self.fila:
-                bloco = self.fila[0]
-                k = min(len(bloco), n - pos)
-                out[pos:pos + k] = bloco[:k]
-                pos += k
-                if k == len(bloco):
-                    self.fila.popleft()
-                else:
-                    self.fila[0] = bloco[k:]
-                self.pendente -= k
-        mem[:] = bytes(out)
+        self.canal = pygame.mixer.Channel(0)
+        self.bloco = int(taxa * self.BLOCO) * 4
+        self.fila = bytearray()
 
     def empurrar(self, dados, bytes_por_segundo):
-        with self.trava:
-            if self.pendente > bytes_por_segundo // 5:   # mais de 0,2 s acumulado: joga fora para não atrasar
-                self.fila.clear()
-                self.pendente = 0
-            self.fila.append(dados)
-            self.pendente += len(dados)
+        self.fila += dados
+        if len(self.fila) > bytes_por_segundo // 4:   # mais de 0,25 s acumulado: joga fora o mais velho
+            del self.fila[:len(self.fila) - bytes_por_segundo // 10]
+        # Um pedaço tocando e um na fila do canal: no máximo ~0,1 s de atraso.
+        while len(self.fila) >= self.bloco and self.canal.get_queue() is None:
+            pedaco = pygame.mixer.Sound(buffer=bytes(self.fila[:self.bloco]))
+            del self.fila[:self.bloco]
+            if self.canal.get_busy():
+                self.canal.queue(pedaco)
+            else:
+                self.canal.play(pedaco)
 
 
 def disco_mais_novo():

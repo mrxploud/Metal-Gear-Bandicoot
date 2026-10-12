@@ -100,3 +100,6 @@
 | 2026-10-11 18:40 | C1 | a tela de título de verdade volta (o modo de desenvolvimento a trocava pelo seletor de fases): abertura, título, Novo Jogo, dificuldade, a cena de abertura e o Dock | `img/20261011_1924_c1_TESTE10_titulo_novo_jogo_dock.png` |
 | 2026-10-11 19:10 | C1 | o Crash anda no Heliporto depois da chegada inteira (3 minutos de rádio e câmera), num jogo começado pela tela de título | `img/20261011_1924_c1_TESTE10_crash_andando_no_heliporto.png` |
 | 2026-10-11 19:24 | C1 | **teste 10**: os dois discos em `motor/out/teste10` (`mgb.m3u`), o `JOGAR.bat` na pasta principal e o `jogar.py` abrindo sempre o teste mais novo, com troca de disco sozinha e cartão de memória | `COMO_JOGAR.md` |
+| 2026-10-11 ~19:40 | ByteMirage | joga o teste 10: "cadê o som do jogo?" e "jogo travou aqui", na cena do elevador; aperta F5 na janela travada e o estado salvo vira a prova | chat do C1 |
+| 2026-10-11 ~20:05 | C1 | o estado salvo mostra a fala da cena esperando o relógio da SPU; o relógio é a voz 23, a mesma dos sons do Crash. Um giro no Dock basta para calar o jogo (o volume cai de ~9.000 para ~300) | `diario/BUGS.md` C3-23 |
+| 2026-10-11 22:45 | C1 | **teste 11**: o Crash na voz 20, o MGS com 7 vozes de efeito; o `jogar.py` toca no dispositivo de som padrão. Com 5 giros antes do elevador, o teste 10 trava e o 11 chega ao Heliporto | `motor/out/teste11` |
