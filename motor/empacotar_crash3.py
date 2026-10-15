@@ -38,8 +38,6 @@ ANIMS = [
     ('C3_DERRAPADA', 'DERRAPADA', 0, 0),
     ('C3_GIRO_LEVE', 'GIRO', 1, 0),
     ('C3_BEIRADA_SUSTO', 'SUSTO', 0, 0),             # dano: braços abertos, olho arregalado (a cara do WOAH!)
-    ('C3_CAI_DE_CARA', 'MORRER', 0, 1),               # vem de fase de gelo e afunda: sobe pela caixa do quadro
-    ('C3_MORTE_OLHOS_E_TENIS', 'MORRER_TNT', 0, 1),   # explosão: sobram os olhos e os tênis
     ('C3_AKU_AKU', 'AKU', 0, 0),                      # a máscara (1 chave), segue o Crash
     ('C3_AKU_AKU_DOURADO', 'AKU_OURO', 0, 0),         # a 2a máscara
     # o pulo (pedido do ByteMirage depois do teste 8): sai do chão, sobe de braços para cima, cambalhota no alto (como
@@ -70,6 +68,12 @@ CAIXAS = [('C3_CAIXA_MADEIRA', 'MADEIRA'), ('C3_CAIXA_INTERROGACAO', 'PERGUNTA')
           ('C3_CAIXA_AKU_AKU', 'AKU')]
 CAIXA_LADO = 700   # lado no MGS (a do Warped mede 540 com o Crash em 1000)
 CAIXA_NT = 12
+
+# as mortes (expansão de 14/10/2026): o código do Crash 2 e da tela dividida não cabia no executável sem tirar a sala
+# do Psycho Mantis do lugar, então as duas mortes saíram da memória fixa e vão num bloco do CD (como a bazuca), lido
+# quando alguém morre. O próprio Crash 1 fazia isso (WillC.gooc: carrega a morte do CD só na hora de morrer).
+MORTE = [('C3_CAI_DE_CARA', 'MORRER', 0, 1),               # vem de fase de gelo e afunda: sobe pela caixa do quadro
+         ('C3_MORTE_OLHOS_E_TENIS', 'MORRER_TNT', 0, 1)]   # explosão: sobram os olhos e os tênis
 
 # a bazuca de Wumpa (pedido 5 do ByteMirage): o Warped corta o Crash ao meio quando ele usa a bazuca (Cgt0G em cima,
 # com a bazuca no ombro; Cgb0G, as pernas). Não cabe na RAM fixa: vai num bloco do CD que o jogo lê para a memória
@@ -336,19 +340,32 @@ def tabelas_do_modelo(fonte, mn, chaves, tex_do_material):
                 cores=[v for cc in md['cores'] for v in cc], base=base, bits=nbits)
 
 
-def bloco_bazuca(c3, tex_do_material, fator):
+def levantar_ate_o_chao(info, q):
+    """Chaves que afundam (a morte que vem de fase de gelo) sobem até o pé ficar no chão."""
+    ky = info['cru']['k'][1]
+    for i, (o, xyz) in enumerate(q):
+        miny = min((o[1] + xyz[3 * j + 1]) * ky for j in range(len(xyz) // 3))
+        if miny < 0:
+            o = (o[0], o[1] + int(math.ceil(-miny / ky)), o[2])
+        q[i] = (o, xyz)
+    return q
+
+
+def bloco_bazuca(c3, tex_do_material, fator, lista=None, nome_bloco='bazuca'):
     """O bloco da bazuca, lido do CD para a memória dinâmica. Formato (little-endian, alinhado a 4):
     'BAZ2', u16 nmodelos, u16 nanims, u32 ofs_anims, u32 ofs_key_ofs, u32 ofs_keys, u32 nchaves, u32 ofs_pontos;
     nmodelos x {u16 nverts, u16 ntris, s32 escala[3], u32 ofs[8]} = o CRASH_MODEL com deslocamentos no lugar dos
     ponteiros (o jogo soma o endereço do bloco); nanims x CRASH_ANIM (8 bytes); u32 key_ofs[]; as chaves;
     s16 pontos[nchaves][3] (no tronco o eixo do cano, nas pernas a cintura)."""
+    lista = [(a[0], a[1], a[2], a[3] if len(a) > 3 else 0) for a in (lista or BAZUCA)]
     mods, quadros = [], {}
-    for nome, _, _ in BAZUCA:
+    for nome, _, _, levantar in lista:
         info = c3.anims[nome]
         if info['modelo'] not in mods:
             mods.append(info['modelo'])
-        info['_q'] = ler_cru(os.path.join(OUT3, info['cru']['arquivo']))
-        quadros.setdefault(info['modelo'], []).extend(info['_q'])
+        q = ler_cru(os.path.join(OUT3, info['cru']['arquivo']))
+        info['_qb'] = levantar_ate_o_chao(info, q) if levantar else q
+        quadros.setdefault(info['modelo'], []).extend(info['_qb'])
     cab = 28 + 48 * len(mods)
     corpo = bytearray()
     desc = []
@@ -364,7 +381,7 @@ def bloco_bazuca(c3, tex_do_material, fator):
         t = tabelas_do_modelo(c3, mn, quadros[mn], tex_do_material)
         tabs[mn] = t
         md = c3.m['modelos'][mn]
-        k = [a for a in BAZUCA if c3.anims[a[0]]['modelo'] == mn][0]
+        k = [a for a in lista if c3.anims[a[0]]['modelo'] == mn][0]
         k = c3.anims[k[0]]['cru']['k']
         esc = [round(k[e] * fator * 4096) for e in range(3)]
         ofs = [poe(struct.pack('<%dH' % len(t['tris']), *t['tris'])), poe(bytes(t['tri_mat'])), poe(bytes(t['flags'])),
@@ -373,21 +390,24 @@ def bloco_bazuca(c3, tex_do_material, fator):
         desc.append(struct.pack('<HHiii8I', md['vertices'], len(md['triangulos']), esc[0], esc[1], esc[2], *ofs))
     chaves, anims = bytearray(), bytearray()
     key_ofs = []
-    for nome, curto, laco in BAZUCA:
+    for nome, curto, laco, _ in lista:
         info = c3.anims[nome]
         mn = info['modelo']
         n = c3.m['modelos'][mn]['vertices']
         primeiro = len(key_ofs)
-        for (o, xyz) in info['_q']:
+        for (o, xyz) in info['_qb']:
             rec = codificar(xyz, n, tabs[mn]['base'], tabs[mn]['bits'], o)
             assert decodificar(rec, n, tabs[mn]['base'], tabs[mn]['bits']) == xyz[:n * 3], nome
             key_ofs.append(len(chaves))
             chaves += rec
-        anims += struct.pack('<BBBBBxH', mods.index(mn), len(info['_q']), info['toca'],
+        anims += struct.pack('<BBBBBxH', mods.index(mn), len(info['_qb']), info['toca'],
                              1 if info['interpola'] else 0, laco, primeiro)
     pontos = []
-    for nome, _, _ in BAZUCA:
+    for nome, _, _, _ in lista:
         info = c3.anims[nome]
+        if info['modelo'] not in PONTO:
+            pontos += [0, 0, 0] * len(info['_qb'])   # (as mortes não usam ponto)
+            continue
         for q in info['por_quadro']:
             p = q['especiais'][PONTO[info['modelo']]]
             pontos += [round(p[0] * fator), round(p[1] * fator), round(p[2] * fator)]
@@ -395,10 +415,10 @@ def bloco_bazuca(c3, tex_do_material, fator):
     o_pontos = poe(struct.pack('<%dh' % len(pontos), *pontos))
     o_kofs = poe(struct.pack('<%dI' % len(key_ofs), *key_ofs))
     o_keys = poe(bytes(chaves) + FOLGA)
-    blob = b'BAZ2' + struct.pack('<HHIIIII', len(mods), len(BAZUCA), o_anims, o_kofs, o_keys, len(key_ofs), o_pontos)
+    blob = b'BAZ2' + struct.pack('<HHIIIII', len(mods), len(lista), o_anims, o_kofs, o_keys, len(key_ofs), o_pontos)
     blob += b''.join(desc) + bytes(corpo)
-    print('bazuca: %d modelos (%s), %d animações, %d chaves, %.1f KB no CD'
-          % (len(mods), ', '.join(mods), len(BAZUCA), len(key_ofs), len(blob) / 1024))
+    print('%s: %d modelos (%s), %d animações, %d chaves, %.1f KB no CD'
+          % (nome_bloco, len(mods), ', '.join(mods), len(lista), len(key_ofs), len(blob) / 1024))
     return blob
 
 
@@ -421,8 +441,8 @@ def main():
             modelos.append(c3.anims[nome]['modelo'])
     caixas_mod = [c3.anims[nome]['modelo'] for nome, _ in CAIXAS]
     baz_mod = []
-    for nome, _, _ in BAZUCA:
-        if c3.anims[nome]['modelo'] not in baz_mod:
+    for nome in [a[0] for a in BAZUCA] + [a[0] for a in MORTE]:
+        if c3.anims[nome]['modelo'] not in baz_mod and c3.anims[nome]['modelo'] not in modelos:
             baz_mod.append(c3.anims[nome]['modelo'])
 
     # regiões e paletas (com o "dono" na chave, porque os ids se repetem entre as duas entregas). Região de 8 bits
@@ -516,12 +536,7 @@ def main():
         info = c3.anims[nome]
         q = ler_cru(os.path.join(OUT3, info['cru']['arquivo']))
         if levantar:
-            ky = info['cru']['k'][1]
-            for i, (o, xyz) in enumerate(q):
-                miny = min((o[1] + xyz[3 * j + 1]) * ky for j in range(len(xyz) // 3))
-                if miny < 0:
-                    o = (o[0], o[1] + int(math.ceil(-miny / ky)), o[2])
-                q[i] = (o, xyz)
+            q = levantar_ate_o_chao(info, q)
         info['_q'] = q
         var = (info['modelo'], GRUPO_DE_BITS.get(nome, ''))
         if var not in variantes:
@@ -653,10 +668,11 @@ def main():
     # dois pedaços lidos em separado (o buffer de leitura vem do GV_Malloc, cujo maior bloco livre é ~50 KB):
     # 1) textura + paletas, 2) sons, cada um começando num setor
     baz = bloco_bazuca(c3, tex_do_material, fator)
+    morte = bloco_bazuca(c3, tex_do_material, fator, MORTE, 'mortes')
     cd, cd_ofs = bytearray(), {}
     for nome_cd, dados_cd in (('ATLAS', bytes(atlas)), ('CLUTS', struct.pack('<%dH' % len(clut_dados), *clut_dados)),
-                              ('SONS', bytes(sons_bytes)), ('BAZUCA', baz)):
-        cd += bytes((-len(cd)) % (2048 if nome_cd in ('SONS', 'BAZUCA') else 64))
+                              ('SONS', bytes(sons_bytes)), ('BAZUCA', baz), ('MORTE', morte)):
+        cd += bytes((-len(cd)) % (2048 if nome_cd in ('SONS', 'BAZUCA', 'MORTE') else 64))
         cd_ofs[nome_cd] = len(cd)
         cd += dados_cd
     os.makedirs(os.path.dirname(CD_SAIDA), exist_ok=True)
@@ -689,9 +705,14 @@ def main():
           '#define CRASH_CD_SETOR_SONS %d' % (brf_setor + cd_ofs['SONS'] // 2048),
           '#define CRASH_CD_BYTES_SONS %d' % len(sons_bytes),
           '#define CRASH_CD_SETOR_BAZUCA %d' % (brf_setor + cd_ofs['BAZUCA'] // 2048),
-          '#define CRASH_CD_BYTES_BAZUCA %d   /* lido para a memoria dinamica quando o quadrado e apertado */' % len(baz), '']
+          '#define CRASH_CD_BYTES_BAZUCA %d   /* lido para a memoria dinamica quando o quadrado e apertado */' % len(baz),
+          '#define CRASH_CD_SETOR_MORTE %d' % (brf_setor + cd_ofs['MORTE'] // 2048),
+          '#define CRASH_CD_BYTES_MORTE %d   /* as mortes: lidas para a memoria dinamica quando alguem morre */' % len(morte),
+          '']
     for i, (_, curto, _) in enumerate(BAZUCA):
         h.append('#define CRASH_BZ_%s %d' % (curto, i))
+    for i, a in enumerate(MORTE):
+        h.append('#define CRASH_MT_%s %d' % (a[1], i))
     h += ['#define CRASH_WUMPA_TPAGE %d' % get_tpage(0, VRAM_TPAGE_X, VRAM_TPAGE_Y),
           '#define CRASH_WUMPA_CLUT %d' % get_clut(*clut_xy(clut_linha[('wumpa', 0)])),
           '#define CRASH_WUMPA_QUADROS %d   /* a Wumpa girando: uv de cada quadro em crash_wumpa_uv */' % len(wumpa_img), '',

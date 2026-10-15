@@ -25,13 +25,25 @@ Teclado                     Controle (Xbox)        PS1
   Backspace                   Back                   Select (rádio)
   F5 / F7                     -                      salvar / carregar estado
   F9                          -                      trocar de disco
+  F11                         -                      BUG: salva os últimos 20 s em vídeo + estado (diario/clipes)
   F12                         -                      foto (vai para diario/img)
   Esc                         -                      sair
+
+Jogador 2 (o Crash 2, azul; a tela se divide quando ele entra):
+  F2 entra, F3 sai            Start / Back do 2º     Start / Select do controle 2
+  I J K L                     direcional do 2º       direcional
+  U                           A do 2º controle       X (pular; de novo no ar = pulo duplo)
+  O                           B do 2º controle       bolinha (giro)
+Com dois controles ligados, o segundo é sempre o do jogador 2.
 """
 import argparse
+import collections
 import os
+import shutil
+import subprocess
 import sys
 import time
+import wave
 
 import numpy as np
 
@@ -51,6 +63,35 @@ TECLAS = {
     pygame.K_RETURN: 'START', pygame.K_BACKSPACE: 'SELECT',
 }
 BOTOES_CONTROLE = {0: 'CROSS', 1: 'CIRCLE', 2: 'SQUARE', 3: 'TRIANGLE', 4: 'L1', 5: 'R1', 6: 'SELECT', 7: 'START'}
+# o jogador 2 no teclado (o Crash 2): F2 entra, F3 sai
+TECLAS2 = {
+    pygame.K_i: 'UP', pygame.K_k: 'DOWN', pygame.K_j: 'LEFT', pygame.K_l: 'RIGHT',
+    pygame.K_u: 'CROSS', pygame.K_o: 'CIRCLE', pygame.K_F2: 'START', pygame.K_F3: 'SELECT',
+}
+
+
+def ler_controle(c):
+    """Os botões apertados num controle do pygame, com os nomes do PS1."""
+    botoes = set()
+    for i, nome in BOTOES_CONTROLE.items():
+        if i < c.get_numbuttons() and c.get_button(i):
+            botoes.add(nome)
+    if c.get_numaxes() >= 2:
+        x, y = c.get_axis(0), c.get_axis(1)
+        if x < -0.5: botoes.add('LEFT')
+        if x > 0.5: botoes.add('RIGHT')
+        if y < -0.5: botoes.add('UP')
+        if y > 0.5: botoes.add('DOWN')
+    if c.get_numaxes() >= 6:
+        if c.get_axis(4) > 0.3: botoes.add('L2')
+        if c.get_axis(5) > 0.3: botoes.add('R2')
+    if c.get_numhats():
+        hx, hy = c.get_hat(0)
+        if hx < 0: botoes.add('LEFT')
+        if hx > 0: botoes.add('RIGHT')
+        if hy > 0: botoes.add('UP')
+        if hy < 0: botoes.add('DOWN')
+    return botoes
 
 
 class Som:
@@ -73,6 +114,9 @@ class Som:
         self.fila = bytearray()
 
     def empurrar(self, dados, bytes_por_segundo):
+        # (inteiro: a taxa do núcleo vem como 44100.0, e com ela o corte da fila quebrava o programa com TypeError
+        # sempre que o som acumulava mais de 0,25 s, num PC mais lento ou com a janela presa)
+        bytes_por_segundo = int(bytes_por_segundo)
         self.fila += dados
         if len(self.fila) > bytes_por_segundo // 4:   # mais de 0,25 s acumulado: joga fora o mais velho
             del self.fila[:len(self.fila) - bytes_por_segundo // 10]
@@ -84,6 +128,63 @@ class Som:
                 self.canal.queue(pedaco)
             else:
                 self.canal.play(pedaco)
+
+
+class CaixaPreta:
+    """Os últimos segundos de jogo (imagem a 30 qps e som) na memória. F11 grava tudo em diario/clipes/: o vídeo do
+    bug já sai pronto para o vídeo do canal, sem precisar reproduzir (pedido do ByteMirage, 14/10/2026)."""
+
+    SEGUNDOS = 20
+
+    def __init__(self, taxa):
+        self.taxa = int(taxa)
+        self.quadros = collections.deque(maxlen=self.SEGUNDOS * 30)
+        self.som = collections.deque()
+        self.som_bytes = 0
+        self.vez = 0
+
+    def quadro(self, img, som):
+        self.vez ^= 1
+        if self.vez:
+            self.quadros.append(img.copy())
+        if som:
+            self.som.append(som)
+            self.som_bytes += len(som)
+            while self.som_bytes > self.taxa * 4 * self.SEGUNDOS and len(self.som) > 1:
+                self.som_bytes -= len(self.som.popleft())
+
+    def gravar(self, ps, nome_teste, fase):
+        pasta = os.path.join(FUSAO, 'diario', 'clipes')
+        os.makedirs(pasta, exist_ok=True)
+        base = os.path.join(pasta, 'bug_%s_%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), nome_teste, fase or 'jogo'))
+        ps.save_state(base + '.state')
+        ps.shot(base + '.png', scale=3)
+        with wave.open(base + '.wav', 'wb') as w:
+            w.setnchannels(2)
+            w.setsampwidth(2)
+            w.setframerate(self.taxa)
+            w.writeframes(b''.join(self.som))
+        ffmpeg = shutil.which('ffmpeg') or r'D:\ffmpeg\ffmpeg-master-latest-win64-gpl-shared\bin\ffmpeg.exe'
+        quadros = list(self.quadros)
+        if quadros and os.path.exists(ffmpeg):
+            h, w_ = quadros[0].shape[:2]
+            p = subprocess.Popen([ffmpeg, '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24',
+                                  '-s', '%dx%d' % (w_, h), '-r', '30', '-i', '-', '-i', base + '.wav',
+                                  '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest',
+                                  base + '.mp4'], stdin=subprocess.PIPE)
+            for q in quadros:
+                if q.shape[:2] == (h, w_):
+                    p.stdin.write(np.ascontiguousarray(q[..., :3]).tobytes())
+            p.stdin.close()
+            p.wait()
+        elif quadros:   # sem ffmpeg: um GIF (sem som) no lugar do mp4
+            from PIL import Image
+            ims = [Image.fromarray(q[..., :3]) for q in quadros[::2]]
+            ims[0].save(base + '.gif', save_all=True, append_images=ims[1:], duration=66, loop=0)
+        with open(base + '.txt', 'w', encoding='utf-8') as f:
+            f.write('disco: %s\nfase: %s\nestado: %s (abre com F7 depois de copiar para jogar.state)\n'
+                    % (nome_teste, fase, os.path.basename(base) + '.state'))
+        return base
 
 
 def disco_mais_novo():
@@ -121,6 +222,9 @@ def main():
     modo.add_argument('--dock', action='store_true', help='entra direto no Loading Dock')
     modo.add_argument('--menu', action='store_true', help='para no seletor de fases do modo de desenvolvimento')
     ap.add_argument('--rapido', action='store_true', help='CPU recompilada (mais leve, mas cai na cena do Heliporto)')
+    ap.add_argument('--cpu', type=int, default=100,
+                    help='relógio da CPU emulada em %% (padrão 100; o do núcleo é 57): com os dois Crashes, 100 deixa '
+                         'o jogo nos 30 quadros por segundo do MGS em vez de 20')
     ap.add_argument('--escala', type=int, default=3)
     ap.add_argument('--quadros', type=int, default=0, help='(teste) sai depois de N quadros e salva uma foto')
     a = ap.parse_args()
@@ -140,7 +244,7 @@ def main():
     tela = pygame.display.set_mode((320 * a.escala, 240 * a.escala))
 
     # Cartão de memória num arquivo do próprio núcleo (motor/saves/pcsx-card1.mcd), o mesmo em todos os testes.
-    opcoes = {'pcsx_rearmed_memcard1': 'shared'}
+    opcoes = {'pcsx_rearmed_memcard1': 'shared', 'pcsx_rearmed_psxclock': str(a.cpu)}
     if not a.rapido:
         opcoes['pcsx_rearmed_drc'] = 'disabled'
     ps = PSX(a.disco, opcoes)
@@ -174,6 +278,7 @@ def main():
     # Cada disco tem seu próprio estado: builds diferentes mudam os endereços
     # do jogo, e restaurar a RAM de outro teste pode travar a nova versão.
     estado = os.path.join(pasta, 'jogar.state')
+    caixa = CaixaPreta(taxa)
     fps = ps.core.fps or 59.94
     proximo = time.perf_counter()
     relogio = pygame.time.Clock()
@@ -206,13 +311,18 @@ def main():
                 titulo()
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F9:
                 trocar_disco()
+            if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F11:
+                titulo('gravando o bug...')
+                pygame.display.flip()
+                base = caixa.gravar(ps, nome_teste, ps.cstr(fase_em, 8) if fase_em else None)
+                titulo('bug gravado: diario/clipes/' + os.path.basename(base))
             if ev.type == pygame.KEYDOWN and ev.key == pygame.K_F12:
                 nome = time.strftime('%Y%m%d_%H%M%S') + '_bytemirage_jogando.png'
                 ps.shot(os.path.join(FUSAO, 'diario', 'img', nome), scale=3)
             if ev.type == pygame.JOYDEVICEADDED:
                 controles = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
 
-        botoes = set()
+        botoes, botoes2 = set(), set()
         if automatico:
             b, n = automatico[0]
             botoes = set(b)
@@ -222,27 +332,12 @@ def main():
         else:
             k = pygame.key.get_pressed()
             botoes = {nome for tecla, nome in TECLAS.items() if k[tecla]}
-            for c in controles:
-                for i, nome in BOTOES_CONTROLE.items():
-                    if i < c.get_numbuttons() and c.get_button(i):
-                        botoes.add(nome)
-                if c.get_numaxes() >= 2:
-                    x, y = c.get_axis(0), c.get_axis(1)
-                    if x < -0.5: botoes.add('LEFT')
-                    if x > 0.5: botoes.add('RIGHT')
-                    if y < -0.5: botoes.add('UP')
-                    if y > 0.5: botoes.add('DOWN')
-                if c.get_numaxes() >= 6:
-                    if c.get_axis(4) > 0.3: botoes.add('L2')
-                    if c.get_axis(5) > 0.3: botoes.add('R2')
-                if c.get_numhats():
-                    hx, hy = c.get_hat(0)
-                    if hx < 0: botoes.add('LEFT')
-                    if hx > 0: botoes.add('RIGHT')
-                    if hy > 0: botoes.add('UP')
-                    if hy < 0: botoes.add('DOWN')
+            botoes2 = {nome for tecla, nome in TECLAS2.items() if k[tecla]}
+            for i, c in enumerate(controles):
+                # o primeiro controle é o do Crash; o segundo, o do Crash 2
+                (botoes if i == 0 else botoes2).update(ler_controle(c))
 
-        ps.run(1, sorted(botoes))
+        ps.run(1, sorted(botoes), sorted(botoes2))
         if pedir_seletor and ps.frame == 30:
             ps.w32(end['MGB_SeletorDeFases'], 1)
         # Troca de disco: abre a tampa, espera, põe o outro disco e fecha (o jogo pede Start depois).
@@ -275,6 +370,7 @@ def main():
             ps.shot(os.path.join(MOTOR, 'out', 'jogar_teste.png'))
             pygame.quit()
             return
+        dados = b''
         if ps.core.audio:
             dados = b''.join(ps.core.audio)
             ps.core.audio.clear()
@@ -282,6 +378,7 @@ def main():
                 som.empurrar(dados, taxa * 4)
 
         img = ps.image()
+        caixa.quadro(img, dados)
         sup = pygame.surfarray.make_surface(np.ascontiguousarray(img.swapaxes(0, 1)))
         tela.blit(pygame.transform.scale(sup, tela.get_size()), (0, 0))
         pygame.display.flip()

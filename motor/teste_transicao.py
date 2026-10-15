@@ -57,7 +57,7 @@ def worker(args):
     sys.path[:0] = [str(MOTOR / "harness"), str(MOTOR)]
     from psx import PSX
     from teste_dock import ligar_no_dock
-    from teste_fases import INTERPRETADA
+    from teste_fases import INTERPRETADA, RELOGIO
     import diag
 
     symbols = {}
@@ -70,7 +70,7 @@ def worker(args):
     output.mkdir(parents=True, exist_ok=True)
     trace = (output / "amostras.jsonl").open("w", encoding="utf-8", buffering=1)
     core_log = (output / "core.log").open("w", encoding="utf-8", buffering=1)
-    opcoes = dict(INTERPRETADA) if args.interpretador else {}
+    opcoes = dict(INTERPRETADA) if args.interpretador else dict(RELOGIO)
     saves = None
     if args.novo_jogo:
         # Com cartão de memória (um só do teste): sem cartão o título do MGS para num aviso.

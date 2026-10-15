@@ -23,7 +23,10 @@ MOTOR = Path(__file__).resolve().parent
 FUSAO = MOTOR.parent
 MAPA = FUSAO / 'repos' / 'mgs_reversing' / 'obj_dev' / 'asm.map'
 # CPU interpretada: o recompilador (lightrec) do PCSX ReARMed derruba o emulador na cena d01a da fusão.
-INTERPRETADA = {'pcsx_rearmed_drc': 'disabled'}
+# CPU emulada a 100% (teste 14; o padrão do núcleo é 57): com os dois Crashes o jogo fica nos 30 quadros por segundo do
+# MGS em vez de 20. O jogar.py usa o mesmo relógio, então os robôs testam o que o jogador joga.
+RELOGIO = {'pcsx_rearmed_psxclock': '100'}
+INTERPRETADA = dict({'pcsx_rearmed_drc': 'disabled'}, **RELOGIO)
 # Sem módulo .bin (só dados) ou só menus de depuração: não são lugares do jogo.
 FORA = {'init', 'init_ve', 'init_tux', 'select', 'select1', 'select2', 'select3', 'select4', 'selectd', 'sound'}
 

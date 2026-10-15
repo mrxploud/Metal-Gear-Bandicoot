@@ -140,6 +140,12 @@ def main():
         src = d.get('srcdir')
         if src and not os.path.isabs(src):
             d.set('srcdir', os.path.join(EXTRAIDO, src))
+    # o dumpsxiso grava caminhos absolutos (licença, raiz da árvore): se o projeto mudou de pasta (14/10/2026: para
+    # fusao\Fusao crash ps1), eles apontam para a extração antiga; tudo o que está dentro de disco_mgs volta para cá
+    for e, atr in [(x, 'file') for x in raiz.iter('license')] + [(x, 'source') for x in raiz.iter('directory_tree')]:
+        src = (e.get(atr) or '').replace('\\', '/')
+        if 'disco_mgs/' in src and not os.path.exists(src):
+            e.set(atr, os.path.join(EXTRAIDO, src.split('disco_mgs/', 1)[1]))
     os.makedirs(os.path.dirname(a.saida), exist_ok=True)
     raiz.set('image_name', a.saida + '.bin')
     raiz.set('cue_sheet', a.saida + '.cue')

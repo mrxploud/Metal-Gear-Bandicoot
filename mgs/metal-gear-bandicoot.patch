@@ -253,7 +253,7 @@ index dd65d88..1268486 100644
      return NewAnime( world, 0, anim );
  }
 diff --git a/source/chara/snake/sna_init.c b/source/chara/snake/sna_init.c
-index 15d1777..2dbd25a 100644
+index 15d1777..1a6b25a 100644
 --- a/source/chara/snake/sna_init.c
 +++ b/source/chara/snake/sna_init.c
 @@ -1,4 +1,7 @@
@@ -601,10 +601,44 @@ index 15d1777..2dbd25a 100644
          sna_start_anim_8004E1F4(work, &sna_anim_crouch_800527DC);
          return;
      }
-@@ -3298,7 +3574,11 @@ void sna_anim_wall_idle_and_c4_helper_800537D4(SnaInitWork *work, int time)
+@@ -3286,6 +3562,24 @@ void sna_fn_800535B8(SnaInitWork *work, int time)
+     }
+ }
+ 
++#ifdef DEV_EXE
++int CrashPulaDaParede(SnaInitWork *work)
++{
++    if ((work->field_9B0_pad_ptr->press & PAD_CROSS) && (work->control.grounded & 1))
++    {
++        GM_ClearPlayerStatusFlag(PLAYER_CAUTION | PLAYER_MOVE);
++        if (GM_GameStatus & STATE_BEHIND_CAMERA)
++        {
++            GM_ExitBehindCamera();
++        }
++        crash_pulo_vel = 0;
++        sna_start_anim_8004E1F4(work, sna_anim_crash_jump);
++        return 1;
++    }
++    return 0;
++}
++#endif
++
+ void sna_anim_wall_idle_and_c4_helper_800537D4(SnaInitWork *work, int time)
+ {
+     if (work->field_A38_local_data != 0)
+@@ -3298,7 +3592,20 @@ void sna_anim_wall_idle_and_c4_helper_800537D4(SnaInitWork *work, int time)
          return;
      }
  
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: encostado na parede o X tambem pula. Antes, andar ate uma caixa colava o Snake invisivel
++     * nela (costas na parede, como no MGS) e o X nao fazia nada: o Crash nunca subia */
++    if ( CrashPulaDaParede( work ) )
++    {
++        return;
++    }
++#endif
++
 +#ifdef DEV_EXE
 +    if ((work->field_9B0_pad_ptr->status & CRASH_AGACHA) && !sna_check_flags1_8004E31C(work, SNA_FLAG1_UNK9))
 +#else
@@ -613,7 +647,23 @@ index 15d1777..2dbd25a 100644
      {
          sna_start_anim_8004E1F4(work, &sna_anim_wall_crouch_80052CCC);
          return;
-@@ -3336,7 +3616,11 @@ void sna_anim_wall_move_helper_800538CC(SnaInitWork *work, int time)
+@@ -3324,6 +3631,15 @@ void sna_anim_wall_move_helper_800538CC(SnaInitWork *work, int time)
+ {
+     int var_s1;
+ 
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: encostado na parede o X tambem pula. Antes, andar ate uma caixa colava o Snake invisivel
++     * nela (costas na parede, como no MGS) e o X nao fazia nada: o Crash nunca subia */
++    if ( CrashPulaDaParede( work ) )
++    {
++        return;
++    }
++#endif
++
+     if (work->field_A38_local_data != 0)
+     {
+         work->field_A38_local_data--;
+@@ -3336,7 +3652,11 @@ void sna_anim_wall_move_helper_800538CC(SnaInitWork *work, int time)
  
      GM_CheckBehindCamera(work->control.map->hzd, &work->control);
  
@@ -625,7 +675,23 @@ index 15d1777..2dbd25a 100644
      {
          GM_ClearPlayerStatusFlag(PLAYER_MOVE);
          sna_start_anim_8004E1F4(work, &sna_anim_wall_crouch_80052CCC);
-@@ -3386,7 +3670,11 @@ void sna_anim_wall_crouch_helper_80053A54(SnaInitWork *work, int time)
+@@ -3376,6 +3696,15 @@ void sna_anim_wall_crouch_helper_80053A54(SnaInitWork *work, int time)
+ {
+     int sound;
+ 
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: encostado na parede o X tambem pula. Antes, andar ate uma caixa colava o Snake invisivel
++     * nela (costas na parede, como no MGS) e o X nao fazia nada: o Crash nunca subia */
++    if ( CrashPulaDaParede( work ) )
++    {
++        return;
++    }
++#endif
++
+     if (work->field_A38_local_data != 0)
+     {
+         work->field_A38_local_data--;
+@@ -3386,7 +3715,11 @@ void sna_anim_wall_crouch_helper_80053A54(SnaInitWork *work, int time)
          return;
      }
  
@@ -637,7 +703,65 @@ index 15d1777..2dbd25a 100644
      {
          if (!sna_8004E808(work, 0, 0, 0, 1100))
          {
-@@ -6792,7 +7080,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
+@@ -5257,8 +5590,44 @@ void sna_knockdown_check_getup_80056A1C(SnaInitWork *work, int time)
+     }
+ }
+ 
++#ifdef DEV_EXE
++/* Metal Gear Bandicoot: dentro da caixa do Crash, X = sai pulando (a TNT fica no chao contando 3, 2, 1) e bolinha
++ * na TNT = o giro do Crash nela: explode na hora, com ele dentro (pedido do ByteMirage: a TNT fere todo mundo) */
++int CrashSaiDaCaixa(SnaInitWork *work)
++{
++    GV_PAD *pad = work->field_9B0_pad_ptr;
++
++    if (GM_Item < IT_Box1 || GM_Item > IT_Box3 || !GM_PlayerBody)
++    {
++        return 0;
++    }
++    if (pad->press & PAD_CROSS)
++    {
++        Crash_SaiDaCaixa(GM_Item == IT_Box3, &GM_PlayerBody->objs->world);
++        GM_Item = IT_None;
++        crash_pulo_vel = 0;
++        sna_start_anim_8004E1F4(work, sna_anim_crash_jump);
++        return 1;
++    }
++    if ((pad->press & PAD_CIRCLE) && GM_Item == IT_Box3)
++    {
++        GM_Item = IT_None;
++        Crash_TntExplode(&GM_PlayerBody->objs->world);
++        sna_start_anim_8004E1F4(work, sna_anim_idle_8005275C);
++        return 1;
++    }
++    return 0;
++}
++#endif
++
+ void sna_80056A54(SnaInitWork *work, int time)
+ {
++#ifdef DEV_EXE
++    if (CrashSaiDaCaixa(work))
++    {
++        return;
++    }
++#endif
+     if (sna_sub_8004E358(work, SNA_FLAG2_UNK5) == 0)
+     {
+         if (gSnaMoveDir_800ABBA4 >= 0)
+@@ -5279,6 +5648,12 @@ void sna_80056A54(SnaInitWork *work, int time)
+ 
+ void sna_fn_80056AD8(SnaInitWork *work, int time)
+ {
++#ifdef DEV_EXE
++    if (CrashSaiDaCaixa(work))
++    {
++        return;
++    }
++#endif
+     if (gSnaMoveDir_800ABBA4 < 0)
+     {
+         GM_ClearPlayerStatusFlag(PLAYER_MOVE);
+@@ -6792,7 +7167,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
  
      if ( time == 4 )
      {
@@ -646,7 +770,7 @@ index 15d1777..2dbd25a 100644
  
          sound = SE_PUNCH_SWING;
          if ( GM_CheckPlayerStatusFlag(PLAYER_IN_THE_WATER) )
-@@ -6817,7 +7105,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
+@@ -6817,7 +7192,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
  
      if ( time == 11 )
      {
@@ -655,7 +779,7 @@ index 15d1777..2dbd25a 100644
  
          sound = SE_PUNCH_SWING;
          if ( GM_CheckPlayerStatusFlag(PLAYER_IN_THE_WATER) )
-@@ -6842,7 +7130,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
+@@ -6842,7 +7217,7 @@ void sna_anim_punch_helper_800591F4(SnaInitWork *work, int time)
  
      if ( time == 22 )
      {
@@ -664,7 +788,7 @@ index 15d1777..2dbd25a 100644
  
          sound = SE_KICK_SWING;
          if ( GM_CheckPlayerStatusFlag(PLAYER_IN_THE_WATER) )
-@@ -7975,6 +8263,47 @@ static inline void sna_act_helper2_8005AD10(SnaInitWork *work)
+@@ -7975,6 +8350,47 @@ static inline void sna_act_helper2_8005AD10(SnaInitWork *work)
      }
  }
  
@@ -712,7 +836,7 @@ index 15d1777..2dbd25a 100644
  static void Act(SnaInitWork *work)
  {
      SVECTOR vec;
-@@ -8029,6 +8358,10 @@ static void Act(SnaInitWork *work)
+@@ -8029,6 +8445,10 @@ static void Act(SnaInitWork *work)
  
      pTarget = work->field_89C_pTarget;
  
@@ -723,7 +847,24 @@ index 15d1777..2dbd25a 100644
      if ( pTarget->damaged & 8 )
      {
          GV_AddVec3(&pTarget->offset, &work->control.step, &work->control.step);
-@@ -8072,6 +8405,10 @@ static void Act(SnaInitWork *work)
+@@ -8057,6 +8477,16 @@ static void Act(SnaInitWork *work)
+         work->control.hzd_height = work->control.mov.vy;
+     }
+ 
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: no pulo as paredes sao testadas na altura dos pes, e nao em chao + 750 (era por isso que o
++     * Crash pulava mas batia em tudo como se estivesse no chao). 350 acima do pe: a ponta do tenis alcanca a quina. Ele
++     * passa por cima do que for mais baixo que o pulo e pousa em cima (o topo vira chao: Crash_ChaoExtra, no control.c) */
++    if ( crash_pulo_no_ar )
++    {
++        work->control.hzd_height = work->control.mov.vy - work->control.height + 350;
++    }
++#endif
++
+     /* しゃがみ天井突き抜け防止 */
+     if ( (work->field_A26_stance != STAND) && (height >= 500) )
+     {
+@@ -8072,6 +8502,10 @@ static void Act(SnaInitWork *work)
          GM_ActControl(&work->control);
      }
  
@@ -734,7 +875,7 @@ index 15d1777..2dbd25a 100644
      flr_800ABBB8[1] = 0;
      do {} while (0);
      flr_800ABBB8[0] = NULL;
-@@ -8520,6 +8857,10 @@ static inline int GetResources(SnaInitWork *work, int name, int where)
+@@ -8520,6 +8954,10 @@ static inline int GetResources(SnaInitWork *work, int name, int where)
  
      work->shadow = NewShadow2(control, body, shadow, &work->enable_shadow);
  
@@ -809,6 +950,34 @@ index dfe2246..c06e0bf 100644
  
      work->field_44 = DG_ZeroVector;
      work->field_48 = DG_ZeroVector;
+diff --git a/source/enemy/watcher.c b/source/enemy/watcher.c
+index a611039..9edc8f5 100644
+--- a/source/enemy/watcher.c
++++ b/source/enemy/watcher.c
+@@ -16,6 +16,9 @@
+ 
+ #include "chara/snake/shadow.h" // for NewShadow2
+ #include "enemy/glight.h"       // for NewGunLight
++#ifdef DEV_EXE
++#include "crash/crash.h"        // Metal Gear Bandicoot: Crash_GuardaMira
++#endif
+ 
+ int s00a_dword_800C3328[8]  = { 2500, 3500, 4000, 5000, 5500, 5600, 5700, 5800 };
+ unsigned short s00a_dword_800C3348[8] = { 450, 15, 30, 60, 90, 0, 32001, 30000 };
+@@ -212,7 +215,13 @@ void WatcherAct_800C430C( WatcherWork *work )
+ 
+         DG_GetLightMatrix2( &( ctrl->mov ), work->light );
+ 
++#ifdef DEV_EXE
++        Crash_GuardaMira( work ); /* Metal Gear Bandicoot: o guarda tambem procura o Crash 2 */
+         EnemyActionMain( work );
++        Crash_GuardaVolta();
++#else
++        EnemyActionMain( work );
++#endif
+         trgt = work->target;
+         GM_MoveTarget( trgt, &( ctrl->mov ) );
+ 
 diff --git a/source/equip/box.c b/source/equip/box.c
 index 4f0959d..6bcab09 100644
 --- a/source/equip/box.c
@@ -908,6 +1077,41 @@ index 87fb1bd..8f50fbd 100644
  }
  
  void *GM_GetChara(unsigned char *script)
+diff --git a/source/game/control.c b/source/game/control.c
+index 5f31e73..51ef416 100644
+--- a/source/game/control.c
++++ b/source/game/control.c
+@@ -11,6 +11,9 @@
+ #include "libhzd/libhzd.h"
+ #include "game/game.h"
+ #include "strcode.h"
++#ifdef DEV_EXE
++#include "crash/crash.h"
++#endif
+ 
+ #define MAX_WHERES 96
+ 
+@@ -294,6 +297,20 @@ static inline void CheckHeight(CONTROL *ctrl, HZD_HDL *hzd)
+         uVar15 = uVar14 & 1;
+     }
+ 
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: o topo de um obstaculo (caixa, conteiner, grade) vira chao para o Crash e o Crash 2 */
++    {
++        int topo = Crash_ChaoExtra(ctrl, vy - vz, uVar15 ? levels[0] : CRASH_SEM_TOPO);
++
++        if (topo != CRASH_SEM_TOPO)
++        {
++            levels[0] = topo;
++            uVar14 |= 1;
++            uVar15 = 1;
++        }
++    }
++#endif
++
+     uVar16 = uVar14 & 2;
+ 
+     if (uVar15 == 0)
 diff --git a/source/game/gamed.c b/source/game/gamed.c
 index dc88adc..2b714d0 100644
 --- a/source/game/gamed.c
@@ -924,7 +1128,7 @@ index dc88adc..2b714d0 100644
      {
          printf("TOO LARGE STAGE BINARY!!\n");
 diff --git a/source/game/item.c b/source/game/item.c
-index eb379ba..6b0a3ea 100644
+index eb379ba..bb71979 100644
 --- a/source/game/item.c
 +++ b/source/game/item.c
 @@ -13,6 +13,9 @@
@@ -947,7 +1151,66 @@ index eb379ba..6b0a3ea 100644
  } Work;
  
  #define BODY_FLAG       ( DG_FLAG_TEXT | DG_FLAG_TRANS | DG_FLAG_SHADE \
-@@ -310,7 +316,13 @@ static void Act(Work *work)
+@@ -172,6 +178,9 @@ static int in_pickup_range(Work *work)
+ {
+     SVECTOR vec;
+     int     diff;
++#ifdef DEV_EXE
++    int     quem = 0;
++#endif
+ 
+     if (!(work->map & GM_PlayerMap))
+     {
+@@ -179,6 +188,9 @@ static int in_pickup_range(Work *work)
+     }
+ 
+     vec = GM_PlayerPosition;
++#ifdef DEV_EXE
++outro:
++#endif
+ 
+     diff = work->control.mov.vy - vec.vy;
+     if (diff < 0)
+@@ -188,7 +200,7 @@ static int in_pickup_range(Work *work)
+ 
+     if (diff > 1000)
+     {
+-        return 0;
++        goto fora;
+     }
+ 
+     vec.vy = work->control.mov.vy;
+@@ -196,16 +208,27 @@ static int in_pickup_range(Work *work)
+     diff = work->control.mov.vx - vec.vx;
+     if (abs(diff) > 500)
+     {
+-        return 0;
++        goto fora;
+     }
+ 
+     diff = work->control.mov.vz - vec.vz;
+     if (abs(diff) > 500)
+     {
+-        return 0;
++        goto fora;
+     }
+ 
+     return 1;
++
++fora:
++#ifdef DEV_EXE
++    /* Metal Gear Bandicoot: o Crash 2 tambem pega o item (vai para o inventario dos dois, como no Crash 1) */
++    if (quem++ == 0 && crash2_control)
++    {
++        vec = crash2_control->mov;
++        goto outro;
++    }
++#endif
++    return 0;
+ }
+ 
+ static void init_pack(POLY_FT4 *poly, DG_TEX *tex)
+@@ -310,7 +333,13 @@ static void Act(Work *work)
          }
      }
  
@@ -961,7 +1224,7 @@ index eb379ba..6b0a3ea 100644
      {
          return;
      }
-@@ -403,6 +415,14 @@ static void Act(Work *work)
+@@ -403,6 +432,14 @@ static void Act(Work *work)
          switch (work->type)
          {
          case 0:
@@ -976,7 +1239,7 @@ index eb379ba..6b0a3ea 100644
              state = add_item(work->id, work->num);
              break;
  
-@@ -541,6 +561,9 @@ static void Act(Work *work)
+@@ -541,6 +578,9 @@ static void Act(Work *work)
  
  static void Die(Work *work)
  {
@@ -986,7 +1249,7 @@ index eb379ba..6b0a3ea 100644
      GM_FreeControl(&work->control);
      GM_FreeObject((OBJECT *)&work->body);
      GM_FreePrim(work->shadow);
-@@ -635,6 +658,9 @@ static int GetResources(Work *work, int name, int where)
+@@ -635,6 +675,9 @@ static int GetResources(Work *work, int name, int where)
  
      GM_CurrentMap = where;
      work->map = where;
@@ -996,7 +1259,7 @@ index eb379ba..6b0a3ea 100644
  
      control = &work->control;
      if (GM_InitControl(control, name, where) < 0)
-@@ -777,6 +803,14 @@ static int GetResources(Work *work, int name, int where)
+@@ -777,6 +820,14 @@ static int GetResources(Work *work, int name, int where)
  
      GM_ActControl(control);
      GM_ActObject2((OBJECT *)body);
@@ -1011,7 +1274,7 @@ index eb379ba..6b0a3ea 100644
      return 1;
  }
  
-@@ -833,6 +867,9 @@ static int GetResourcesPut(Work *work, SVECTOR *pos, SVECTOR *step, ITEM_INFO *i
+@@ -833,6 +884,9 @@ static int GetResourcesPut(Work *work, SVECTOR *pos, SVECTOR *step, ITEM_INFO *i
      work->num = info->num;
      work->message = info->message;
      work->end_proc = 0;
@@ -1021,7 +1284,7 @@ index eb379ba..6b0a3ea 100644
  
      if (!check_type(work, type))
      {
-@@ -863,6 +900,13 @@ static int GetResourcesPut(Work *work, SVECTOR *pos, SVECTOR *step, ITEM_INFO *i
+@@ -863,6 +917,13 @@ static int GetResourcesPut(Work *work, SVECTOR *pos, SVECTOR *step, ITEM_INFO *i
          setLineF4(&work->text_line[i]);
          setRGB0(&work->text_line[i], 255, 255, 255);
      }
@@ -1079,10 +1342,49 @@ index 4749a72..f232c06 100644
              bound_flag = 2;
  
 diff --git a/source/libdg/chanl.c b/source/libdg/chanl.c
-index ffbad59..4c20695 100644
+index ffbad59..830413e 100644
 --- a/source/libdg/chanl.c
 +++ b/source/libdg/chanl.c
-@@ -368,6 +368,13 @@ void DG_StopMainChanlSystem( void )
+@@ -7,6 +7,9 @@
+ #include <libgpu.h>
+ #include <libapi.h>
+ #include "mgstype.h"
++#ifdef DEV_EXE
++#include "crash/crash.h"
++#endif
+ 
+ /*---------------------------------------------------------------------------*/
+ 
+@@ -178,11 +181,28 @@ void DG_ClearChanlSystem( int which )
+             cp->dirty--;
+         }
+ 
++#ifdef DEV_EXE
++        /* Metal Gear Bandicoot: tela dividida (o Crash 2) - decidida no canal de fundo (o primeiro); o canal 3D
++           desenha so a metade deste quadro */
++        if ( cp == DG_Chanls || cp == &DG_Chanls[ 1 ] )
++        {
++            Crash_TelaChanl( cp, which );
++        }
++#endif
++
+         env1 = &cp->env1[ which ];
+         env2 = &cp->env2[ which ];
+ 
+         /* execute the channel in the order env1 -> ot -> env2 */
+         catPrim( env1, ot_end );
++#ifdef DEV_EXE
++        /* ... e no fim do canal de fundo a outra metade e copiada da outra tela */
++        if ( cp == DG_Chanls && Crash_TelaDividida() )
++        {
++            Crash_TelaCopia( ot, env2, which );
++        }
++        else
++#endif
+         catPrim( ot, env2 );
+ 
+         if ( cp->link >= 0 )
+@@ -368,6 +388,13 @@ void DG_StopMainChanlSystem( void )
          DG_FreeObjsPacket( objs, 0 );
          DG_FreeObjsPacket( objs, 1 );
      }
@@ -1096,6 +1398,34 @@ index ffbad59..4c20695 100644
  }
  
  void DG_RestartMainChanlSystem( void )
+diff --git a/source/libdg/frame.c b/source/libdg/frame.c
+index bed2847..48e1047 100644
+--- a/source/libdg/frame.c
++++ b/source/libdg/frame.c
+@@ -8,6 +8,9 @@
+ #include "mgstype.h"
+ #include "libgv/libgv.h"
+ #include "menu/menuman.h"
++#ifdef DEV_EXE
++#include "crash/crash.h"
++#endif
+ 
+ /*** data ***/
+ STATIC VECTOR SECTION(".data") Lower = {0, -4096, 0, 0};
+@@ -139,7 +142,13 @@ void DG_StartFrame( void )
+ 
+ void DG_EndFrame( void )
+ {
++#ifdef DEV_EXE
++    Crash_TelaCamera( 1 ); /* Metal Gear Bandicoot: nos quadros do Crash 2, a camera dele */
++#endif
+     DG_SortChanlSystem( GV_Clock );
++#ifdef DEV_EXE
++    Crash_TelaCamera( 0 );
++#endif
+ }
+ 
+ void DG_MakeCameraMatrix( DG_CHANL *chanl, SVECTOR *from, SVECTOR *to, int screen )
 diff --git a/source/libdg/libdg.h b/source/libdg/libdg.h
 index 2201d8e..6ca52da 100644
 --- a/source/libdg/libdg.h
@@ -1238,3 +1568,27 @@ index 53d295d..7dd9603 100644
                  {
                      if (se_request[i].code == 0)
                      {
+diff --git a/source/takabe/wt_area.c b/source/takabe/wt_area.c
+index 546dc0f..c34ea82 100644
+--- a/source/takabe/wt_area.c
++++ b/source/takabe/wt_area.c
+@@ -10,6 +10,9 @@
+ #include "takabe/thing.h"       // for THING_*
+ #include "takabe/wt_view.h"     // for NewWaterView2
+ #include "takabe/ripple.h"      // for NewRipple
++#ifdef DEV_EXE
++#include "crash/crash.h"        // Metal Gear Bandicoot: Crash_Agua
++#endif
+ 
+ extern CONTROL         *tenage_ctrls_800BDD30[16];
+ extern int              tenage_ctrls_count_800BDD70;
+@@ -89,6 +92,9 @@ static void Act( Work *work )
+     }
+ 
+     if ( GM_PlayerControl == NULL ) return ;
++#ifdef DEV_EXE
++    Crash_Agua( work->bound ); /* Metal Gear Bandicoot: o Crash 2 boia nesta agua */
++#endif
+     /* スネーク中心部の水中バウンドチェック */
+     flag = BoundInCheck( work->bound, &GM_PlayerControl->mov );
+     if ( work->snake_catch == 0  ){

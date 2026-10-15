@@ -195,6 +195,7 @@ class Core:
         self.disk = None
         self.pixel_format = PIXEL_0RGB1555
         self.pressed = set()
+        self.pressed2 = set()   # Metal Gear Bandicoot: o controle 2 (o Crash 2)
         self.frame = None
         self.frames = 0
         self.audio = None
@@ -304,7 +305,13 @@ class Core:
         return frames
 
     def _input_state(self, port, device, index, button):
-        return 1 if port == 0 and device == DEVICE_JOYPAD and button in self.pressed else 0
+        if device != DEVICE_JOYPAD:
+            return 0
+        if port == 0:
+            return 1 if button in self.pressed else 0
+        if port == 1:
+            return 1 if button in self.pressed2 else 0
+        return 0
 
     # --- control ---------------------------------------------------------------------
     def load(self, path):
@@ -322,10 +329,13 @@ class Core:
         self.lib.retro_get_system_av_info(C.byref(av))
         self.fps, self.sample_rate = av.timing.fps, av.timing.sample_rate
         self.lib.retro_set_controller_port_device(0, DEVICE_JOYPAD)
+        self.lib.retro_set_controller_port_device(1, DEVICE_JOYPAD)
 
-    def run(self, frames=1, pressed=None):
+    def run(self, frames=1, pressed=None, pressed2=None):
         if pressed is not None:
             self.pressed = set(pressed)
+        if pressed2 is not None:
+            self.pressed2 = set(pressed2)
         for _ in range(frames):
             self.lib.retro_run()
             self.frames += 1

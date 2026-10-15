@@ -65,14 +65,15 @@ class PSX:
     def frame(self):
         return self.core.frames
 
-    def run(self, frames=1, buttons=()):
-        self.core.run(frames, [PAD[b] for b in buttons])
+    def run(self, frames=1, buttons=(), buttons2=()):
+        """buttons2: o controle 2 (o Crash 2 do Metal Gear Bandicoot)."""
+        self.core.run(frames, [PAD[b] for b in buttons], [PAD[b] for b in buttons2])
 
-    def hold(self, buttons, frames):
-        self.run(frames, buttons)
+    def hold(self, buttons, frames, buttons2=()):
+        self.run(frames, buttons, buttons2)
 
-    def press(self, buttons, frames=2, release=2):
-        self.run(frames, buttons)
+    def press(self, buttons, frames=2, release=2, buttons2=()):
+        self.run(frames, buttons, buttons2)
         self.run(release, ())
 
     # --- memória (little-endian, endereços do jogo) --------------------------------------

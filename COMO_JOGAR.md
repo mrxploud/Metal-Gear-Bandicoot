@@ -1,12 +1,16 @@
 # Como jogar o Metal Gear Bandicoot
 
-**Dois cliques no `JOGAR.bat`** (na pasta principal) ou, no terminal:
+**Dois cliques no `JOGAR.bat`** (na pasta principal) ou, no terminal (PowerShell), na pasta do projeto:
 
-```
-motor\.venv\Scripts\python.exe -I motor\jogar.py
+```powershell
+.\JOGAR.bat
 ```
 
-O comando é sempre o mesmo: ele abre sozinho **o teste mais novo** (hoje o **teste 11**, em `motor\out\teste11`), com
+De outra pasta: `& "<pasta do projeto>\JOGAR.bat"`. Também vale `.\motor\.venv\Scripts\python.exe -I motor\jogar.py`
+na pasta do projeto. No PowerShell o `.\` na frente é obrigatório: sem ele aparece "Não foi possível carregar o
+módulo 'motor'" (achado do ByteMirage no teste 13).
+
+O comando é sempre o mesmo: ele abre sozinho **o teste mais novo** (hoje o **teste 15**, em `motor\out\teste15`), com
 os dois discos. Para abrir um teste antigo: `--disco motor\out\teste9\mgb.cue`. Não precisa de BIOS de PS1: o
 emulador (PCSX ReARMed) tem uma embutida.
 
@@ -19,6 +23,79 @@ no Loading Dock (como era até o teste 9) e `--menu` para no seletor de fases do
 - **Trocar de disco**: quando o jogo pede o disco 2, o programa troca sozinho (o título da janela avisa); é só
   apertar **Start (Enter)**, como pede a tela. **F9** troca à mão.
 - **F5 / F7** salvam e carregam o estado na hora (um por teste).
+
+## O que mudou no teste 15: o Crash 2 respeita o cenário
+
+Consertos dos achados do ByteMirage no teste 14 ("ele atravessa a parede", "deixei o jogador 2 dentro da parede", "ele
+também não pega caixa"):
+
+- **Paredes**: o Crash 2 usava a regra de parede dos guardas, e não a do Snake. Atravessava paredes que seguram o
+  Crash 1 (até a borda da fase) e batia em paredes invisíveis na beira da água que o Crash 1 passa. Agora usa a mesma
+  regra do Crash 1. Medido no Loading Dock, empurrando o Crash 2 contra as paredes que mudaram: o teste 14 atravessava
+  10 de 10; o 15, nenhuma de 11.
+- **Água**: no tanque do começo do Dock o Snake nada e mergulha (o fundo fica a 4 m). O Crash 2 afundava até o fundo e
+  ficava andando por baixo do cais, com a câmera dele dentro da estrutura. Agora ele **boia**, com a água no peito; sai
+  pulando (X) numa beirada ou com **triângulo** (volta para perto do Crash 1).
+- **Itens**: o Crash 2 pega os itens do chão (as caixas do Aku Aku, munição, as caixas A, B e C...). Vão para o mesmo
+  inventário do Crash 1, e a máscara do Aku Aku vai para o Crash 1: os dois são um time.
+
+## O que mudou no teste 14: tela inteira com os dois juntos, sem coleira e a 30 quadros
+
+- **A tela só se divide quando precisa.** Com os dois Crashes perto, é a tela inteira, com a câmera do Crash 1. Quando
+  o Crash 2 está saindo da tela (chega na beirada, uns 4 a 5 m), ela se divide como antes; quando ele volta para perto (uns
+  2,5 m), junta de novo. A barra azul do Crash 2 fica no alto, à esquerda, embaixo da vida do Crash 1.
+- **Sem coleira.** Até o teste 13 o Crash 2 era puxado de volta a 12 m do Crash 1. Agora ele anda pela área inteira
+  em que o Crash 1 está (no Heliporto chegou a 15 m, até a encosta de neve), e as paredes seguram. Ele só volta se
+  cair do mapa, se o Crash 1 passar para outra sala com ele a mais de 6 m, ou com **triângulo** no controle 2. Portas,
+  elevadores e a troca de área continuam sendo do Crash 1: o Metal Gear só carrega as salas em volta dele.
+- **30 quadros por segundo com os dois.** O `jogar.py` agora acelera o processador emulado (o relógio da CPU do
+  PlayStation) de 57% para 100%. Medido no Loading Dock: com os dois Crashes o jogo ficava a 20 quadros por segundo,
+  e cada metade da tela dividida mudava só 10 vezes por segundo; agora é 30 juntos e 30 divididos (15 por metade).
+  `--cpu 57` volta ao padrão do emulador.
+- **60 quadros não dá** sem mexer no jogo inteiro: o Metal Gear espera 2 vsyncs por quadro (30 por segundo) e move
+  tudo um passo fixo por quadro. Forçando 60, o jogo inteiro corre o dobro (o Crash, os guardas, os créditos da
+  abertura). Gravado em `clips/coop_cpu300_60qps_tudo_rapido` (estúdio, mgb-expansao).
+
+## O que mudou no teste 13: os guardas veem o Crash 2
+
+- **Os guardas enxergam o Crash 2** (no teste 12 só viam o Crash 1): o guarda procura quem está na frente dele; se
+  os dois estão, o mais perto. Ao ver o Crash 2 ele grita **"WOAH!"**, toca o alerta e atira nele como faria com o
+  Crash 1. Enquanto está vendo um dos dois, não troca. O alerta ainda chama os outros guardas para onde o
+  Crash 1 está.
+- **O Crash 2 segura bala**: um tiro que ia no Crash 1 para no Crash 2 se ele estiver na frente (e o contrário).
+  Morto, o corpo dele não leva nem segura tiro.
+- Limite: como os outros truques dos guardas, só vale nas 59 áreas compiladas da fonte (o Loading Dock, o Heliporto,
+  o Tank Hangar e as celas, por exemplo). Nas 33 áreas que usam o código original, os guardas só veem o Crash 1.
+
+## O que mudou no teste 12: a expansão (dois jogadores, subir nas coisas, a TNT)
+
+- **Jogador 2, com a tela dividida.** Quem pega o **controle 2** aperta **Start** e o **Crash 2** (azul, para ninguém
+  se perder) aparece ao lado do Crash; a tela se divide: em cima o Crash, embaixo o Crash 2, cada um com a sua câmera.
+  O Crash 2 corre, pula (com pulo duplo), gira (derruba guarda) e sobe nas coisas; leva tiro e explosão, tem a barra
+  de vida azul no canto da metade dele, e quando morre volta ao lado do Crash depois de uns 4 s. **Triângulo** traz ele de
+  volta para perto do Crash (se ficar preso atrás de uma porta); **Select** tira ele do jogo. Ele volta sozinho em cada
+  fase. Limites: os guardas só enxergam o Crash 1; o Crash 2 não abre portas nem aciona eventos; na sala do Psycho
+  Mantis o controle 2 é do Psycho Mantis.
+  - No teclado o Crash 2 é **I J K L** (direções), **U** (pular), **O** (girar), **F2** (entrar) e **F3** (sair). Com
+    dois controles ligados, o segundo é sempre o do Crash 2.
+  - A gambiarra: o PlayStation não aguenta desenhar a fase duas vezes por quadro, então cada quadro desenha uma
+    metade só e a outra é copiada da tela anterior. Cada metade anda a 15 quadros por segundo.
+- **Consertado: o Crash pulava mas não subia em nada** (achado do ByteMirage). Eram três coisas: o Snake invisível
+  testava as paredes na altura do chão mesmo com o Crash no ar; encostando numa caixa o Snake "colava" de costas
+  nela (como no MGS) e o X não pulava; e o MGS não tem chão em cima das caixas (o Snake nunca sobe nelas). Agora o
+  topo de caixas, contêineres e grades vira chão para os dois Crashes. Exemplo: o contêiner do lado leste do
+  Heliporto (precisa do pulo duplo).
+- **A TNT fere todo mundo** (pedido do ByteMirage): a explosão é maior que a granada e pega o Crash, o Crash 2 e os
+  guardas; uma TNT explode outra que esteja contando perto. **Vestido na caixa C (TNT)**: **X** pula para fora e a
+  caixa fica no chão contando 3, 2, 1; **bolinha** (o giro) explode na hora, com o Crash dentro. O giro numa TNT
+  contando no chão também explode na hora.
+- **As mortes vêm do CD**: para o código do Crash 2 caber nos 2 MB, as duas mortes do Crash saíram da memória fixa e
+  são lidas quando alguém morre (como o próprio Crash 1 fazia). No primeiro instante da morte o Crash fica no susto.
+- **F11 grava o bug**: os últimos 20 segundos de jogo (vídeo com som), uma foto e o estado vão para
+  `diario\clipes\bug_<data>_<teste>_<fase>.*`. Se travar, aperte F11 antes de fechar.
+- **Consertado: o `jogar.py` podia fechar sozinho** quando o som acumulava (PC lento, janela presa).
+- **Ainda não achado: o travamento subindo a escada para os dutos.** A escadaria do Heliporto, o duto de cima e a fase
+  do duto (com o rádio do Miller) não travaram nos testes. Se acontecer de novo: F11 e diga onde foi.
 
 ## O que mudou no teste 11: o som do jogo e o elevador de novo
 
@@ -66,6 +143,9 @@ no Loading Dock (como era até o teste 9) e `--menu` para no seletor de fases do
 | Enter | Start | Start | pausa |
 | Backspace | Back | Select | rádio (Campbell: 140.85) |
 | F5 / F7 | | | salvar / carregar estado |
+| **F11** | | | **bug**: grava os últimos 20 s em vídeo + foto + estado em `diario\clipes` |
+| F2 / F3 | Start / Back do 2º | Start / Select do controle 2 | **Crash 2** entra / sai |
+| I J K L, U, O | 2º controle | controle 2 | Crash 2: andar, pular, girar (triângulo do 2º controle: volta para perto do Crash) |
 | F9 | | | trocar de disco (o programa já troca sozinho quando o jogo pede) |
 | **F12** | | | **foto: vai direto para `diario/img/`** (para o vídeo) |
 | Esc | | | sair |

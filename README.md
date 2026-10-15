@@ -18,6 +18,30 @@ No [Sonic Mirage](https://github.com/mrxploud/Sonic-Mirage), a fusão anterior, 
 
 <sub>Teste 8: o Crash saca a bazuca, atira uma Wumpa e o guarda leva o golpe.</sub>
 
+## Novidades: a expansão (testes 12 a 15)
+
+Depois do primeiro vídeo, mrxploud voltou a jogar com uma lista de problemas e de pedidos. O que entrou:
+
+- **Dois jogadores.** Start no controle 2 traz o **Crash 2**, azul. Perto um do outro, os dois dividem a tela inteira;
+  quando o Crash 2 sai da câmera, a tela se divide e cada um fica com a sua metade. Não tem coleira: ele anda pela
+  área inteira.
+- **Subir nas coisas.** O topo de caixas, contêineres e grades virou chão, e encostado numa parede o X pula.
+- **A TNT fere todo mundo.** Dentro da caixa C, o X sai pulando e a TNT fica contando; o giro explode na hora, com o
+  Crash dentro. A explosão pega os guardas, os dois Crashes e as outras TNTs por perto.
+- **Os guardas veem o Crash 2**, gritam "WOAH!" e atiram nele.
+- **30 quadros por segundo com os dois** (o máximo do Metal Gear Solid): o `jogar.py` roda o processador emulado do
+  PlayStation a 100%.
+- **O Crash 2 respeita o cenário:** bate nas mesmas paredes que o Crash 1, boia na água e pega os itens do chão.
+- Para tudo isso caber nos 2 MB do PlayStation, as mortes do Crash passaram a morar no CD e só são lidas quando alguém
+  morre. Sobraram 96 bytes no executável.
+
+Como cada uma saiu, com os bugs do caminho: [16. A expansão: dois Crashes](#16-a-expansão-dois-crashes) e
+[17. Os guardas, os 30 quadros e o fundo do tanque](#17-os-guardas-os-30-quadros-e-o-fundo-do-tanque).
+
+![A tela dividida no Heliporto: o Crash em cima, o Crash 2 embaixo, longe na neve](docs/img/21_tela_dividida.png)
+
+<sub>Teste 14: o Crash 2 se afastou e a tela se dividiu. Quando ele volta, ela junta de novo.</sub>
+
 ### De onde veio a ideia
 
 Em dezembro de 2018, **u/Max_Comix** postou no r/crashbandicoot um desenho antigo dele: ["Metal Gear Bandicoot: Wumpa Fruit Eater"](https://www.reddit.com/r/crashbandicoot/comments/a5ofbf/i_found_this_old_crash_bandicoot_metal_gear_solid/). Nos comentários, **yuvi3000** sugeriu que o Crash se escondesse numa caixa do próprio Crash, outra pessoa pediu que o "!" dos guardas virasse "Woah!", e **ZXE102R** completou: "Honestly we need a woah mod for metal gear solid now."
@@ -34,6 +58,7 @@ Oito anos depois, mrxploud achou o post por acaso, enquanto escolhia dois jogos 
 
 ## Índice
 
+- [Novidades: a expansão](#novidades-a-expansão-testes-12-a-15)
 - [Estado atual](#estado-atual)
 - [Como rodar](#como-rodar)
 - [Controles](#controles)
@@ -48,7 +73,7 @@ Oito anos depois, mrxploud achou o post por acaso, enquanto escolhia dois jogos 
 
 ## Estado atual
 
-O retrato é o do **teste 11** (11/10/2026). mrxploud foi jogando as versões e cada rodada dele virou o teste seguinte.
+O retrato é o do **teste 15** (15/10/2026). mrxploud foi jogando as versões e cada rodada dele virou o teste seguinte.
 
 ### Funciona
 
@@ -61,6 +86,18 @@ O retrato é o do **teste 11** (11/10/2026). mrxploud foi jogando as versões e 
 - **Aku Aku:** as três rações do Dock viraram caixas do Aku Aku. A primeira máscara absorve um tiro, a dourada dois, e a terceira vai para o rosto do Crash: 20 segundos invencível, e guarda que encostar cai.
 - **A bazuca de Wumpa:** segurar o botão da arma saca a bazuca (dá para andar mirando), soltar atira uma Wumpa que voa reto; o guarda que ela acertar leva o golpe e cambaleia.
 - **O pulo do Warped:** pulo (mais alto segurando o botão), pulo duplo com a cambalhota, pulo longo saindo da derrapada e o giro no ar. Agachar é de segurar, como no Crash.
+- **Dois jogadores:** Start no controle 2 traz o **Crash 2** (azul). Perto, os dois dividem a tela inteira; quando o
+  Crash 2 se afasta, a tela se divide e cada um tem a sua metade e a sua câmera (teste 14). Ele anda pela área inteira
+  do Crash 1, sem coleira; corre, pula, gira, sobe nas coisas, leva tiro e explosão e volta 3 s depois de morrer.
+  Desde o teste 15 ele bate nas mesmas paredes que o Crash 1, boia na água e pega os itens do chão (vão para o
+  inventário dos dois).
+- **30 quadros por segundo com os dois:** o `jogar.py` roda o processador emulado do PlayStation a 100% (o padrão do
+  emulador é 57%, em que os dois Crashes derrubavam o jogo para 20).
+- **Os guardas veem o Crash 2** (teste 13): o guarda procura quem está na frente dele (os dois na frente, o mais
+  perto), grita "WOAH!" e atira. O Crash 2 também segura a bala que ia no Crash 1, e vice-versa.
+- **Subir nas coisas:** o topo de caixas, contêineres e grades vira chão para o Crash (e para o Crash 2).
+- **A TNT fere todo mundo:** dentro da caixa C, X pula para fora e a TNT fica contando; o giro explode na hora, com o
+  Crash dentro. A explosão é maior que a granada, pega guardas, Crash e Crash 2, e faz outra TNT perto explodir junto.
 - Rádio, primeira pessoa, pausa e menus do Metal Gear Solid continuam funcionando.
 
 ### Não funciona ou não foi feito
@@ -68,6 +105,10 @@ O retrato é o do **teste 11** (11/10/2026). mrxploud foi jogando as versões e 
 - **O "WOAH!", o grito e a TNT em 33 das 92 áreas.** Nelas (entre outras: o Cânion, a Torre de Comunicação, o laboratório, a sala do Psycho Mantis, o REX e o Liquid) o código é o original do Metal Gear Solid, ajustado ao nosso executável, porque a descompilação ainda não terminou essas áreas. Lá os guardas mostram o "!" e o grito de sempre, e o chute na caixa é o do MGS. O Crash em si (giro, pulo, bazuca, Aku Aku, caixas) funciona em todas.
 - Sem tela de título própria e sem o Game Over "CRASH? CRAAASH!".
 - Os guardas continuam sendo os do Metal Gear Solid (a ideia de virarem os assistentes de laboratório do Cortex ficou no papel).
+- **O Crash 2 não abre portas nem aciona eventos**, e com a tela dividida cada metade muda 15 vezes por segundo. Nas
+  33 áreas de código original os guardas só veem o Crash 1, e o alerta sempre manda os reforços para onde o Crash 1
+  está.
+- **Um travamento subindo a escada para os dutos**, achado por mrxploud jogando o teste 11, ainda não foi reproduzido.
 - A Wumpa da bazuca não quebra caixa.
 - Agachado, o botão do giro não faz nada (no MGS1 o Snake também não soca agachado).
 - O Crash não pisca. Ele tem 64 "caras" no disco; só a de olhos abertos é usada.
@@ -223,8 +264,12 @@ A janela abre com som na tela de título do Metal Gear Solid: Novo Jogo, ou cont
 | Backspace | Back | Select | rádio |
 | F5 / F7 | | | salvar / carregar estado |
 | F9 | | | trocar de disco (o programa já troca sozinho quando o jogo pede) |
+| F11 | | | **bug**: grava os últimos 20 s em vídeo, uma foto e o estado em `diario/clipes/` |
 | F12 | | | foto (vai para `diario/img/`) |
 | Esc | | | sair |
+
+**Jogador 2 (o Crash 2, azul):** o segundo controle, ou no teclado **F2** entra / **F3** sai, **I J K L** andam,
+**U** pula, **O** gira. No controle 2: Start entra, Select sai, triângulo traz o Crash 2 de volta para perto do Crash.
 
 ---
 
@@ -421,6 +466,63 @@ Para dar para zerar faltavam três coisas que o modo de desenvolvimento não tin
 *O disco 2: o jogo pediu a troca, o disco entrou e o Crash seguiu no corredor da área seguinte.*
 
 Jogando o teste 10, mrxploud achou mais dois: o som do jogo sumia, e a cena do elevador voltou a travar. Era o mesmo bug. O chip de som do PlayStation tem 24 vozes, e o Metal Gear Solid usa todas: 13 para a música, 8 para os efeitos, 2 para as falas e a última como **relógio**. Essa voz toca silêncio em laço, e cada volta acorda o programa de som do jogo. Os sons do Crash tinham ido justamente para essa voz, que parecia livre. O primeiro "Woah!" parava o relógio: a música e os efeitos sumiam, e a fala da cena do elevador ficava esperando para sempre. Agora o Crash tem uma voz dele, e o Metal Gear toca efeitos com 7 vozes em vez de 8.
+
+### 16. A expansão: dois Crashes
+
+Muita gente gostou do vídeo, e mrxploud voltou a jogar com uma lista: o Crash pula mas não sobe em nada, o jogo trava
+subindo a escada para os dutos, e um pedido grande: **multijogador cooperativo, com tela dividida**. Mais a TNT ferindo
+todo mundo.
+
+O "não sobe em nada" eram três coisas. O Snake invisível testa as paredes sempre na altura do chão mais 750, mesmo com
+o Crash lá no alto: no pulo, ele batia nas caixas como se estivesse no chão. Encostando numa caixa, o Snake cola nela de
+costas (como no Metal Gear), e nesse estado o botão de pular não fazia nada. E o Metal Gear Solid não tem chão em cima
+das caixas, porque o Snake nunca sobe nelas. Agora, no pulo, as paredes são testadas na altura dos pés; encostado, o X
+pula; e o topo de um contorno fechado de paredes da mesma altura vira chão.
+
+O segundo jogador não é um segundo Snake: o código do Snake depende de dezenas de variáveis do jogador, e duas cópias
+brigariam por elas. O **Crash 2** é um personagem novo, com a colisão do próprio jogo, que lê o controle 2 (que o
+Metal Gear Solid já lia, por causa do Psycho Mantis). Para a tela dividida, o PlayStation não aguenta desenhar a fase
+duas vezes por quadro, nem em tempo nem em memória; então cada quadro desenha uma metade só: os pares, a de cima, com a
+câmera do Crash; os ímpares, a de baixo, com a mesma câmera levada até o Crash 2. A outra metade é copiada da tela
+anterior por um comando de cópia da memória de vídeo, no fim da lista de desenho.
+
+Faltou memória, claro. O código novo deixava o executável 8,7 KB maior, e a sala do Psycho Mantis (a área com mais
+código) só tinha 2 KB de folga. A saída foi a mesma que o Crash 1 usava em 1996: as duas mortes do Crash saíram da
+memória fixa e foram para um bloco no CD, lido quando alguém morre. Com dois Crashes, o executável ficou menor que o do
+teste 11.
+
+### 17. Os guardas, os 30 quadros e o fundo do tanque
+
+No teste 12, o Crash 2 passava na frente de um guarda e nada acontecia. A visão, a mira e o tiro do guarda leem a
+posição do Snake, e o Crash 2 é um personagem à parte, que o código do guarda não conhece. Agora, enquanto cada guarda
+pensa, quem estiver na frente dele vira o "jogador" daquele guarda por um instante (os dois na frente: o mais perto):
+ele vê o Crash 2, grita "WOAH!" e atira. Na primeira versão, as balas atravessavam o Crash 2 sem tirar vida nenhuma:
+a bala do Metal Gear Solid só para em alvo com uma marca (`TARGET_SEEK`), e o Crash 2 não tinha. Com a marca, ele leva
+os tiros, cai e volta.
+
+![O guarda vendo o Crash 2: "WOAH!" nas duas metades da tela](docs/img/23_guarda_ve_crash2.png)
+
+<sub>Teste 13: o guarda está entre os dois e escolhe quem está na frente dele, o Crash 2.</sub>
+
+Com os dois Crashes, mrxploud achou que o jogo "parecia travando". Medido no Dock: 20 quadros por segundo em vez de 30,
+e com a tela dividida cada metade só mudava 10 vezes por segundo. A pergunta seguinte foi "e 60?". Dá para forçar, mas
+o Metal Gear Solid move tudo um passo por quadro: a 60 o jogo inteiro corre duas vezes mais rápido, até os créditos
+da abertura. A saída veio do emulador: o processador emulado do PlayStation, que o núcleo deixa a 57%, roda a 100% no
+`jogar.py`, e os dois ficam nos 30, o máximo do jogo. A tela também parou de dividir o tempo todo: juntos, os dois
+dividem a tela inteira, e ela só se divide quando o Crash 2 chega na beirada da câmera. A coleira de 12 m do teste 12
+saiu; no Heliporto ele chegou a 15 m, na encosta de neve.
+
+![Os dois Crashes juntos, na tela inteira](docs/img/22_dois_crashes.png)
+
+<sub>Teste 14: o Crash 2 voltou e a tela juntou de novo.</sub>
+
+No teste 14, mrxploud deixou o Crash 2 "dentro da parede" e contou que ele atravessava umas paredes e batia em
+outras. Com o jogo dele ainda aberto, o Claude leu a memória do PlayStation direto do emulador, só lendo, e achou o
+Crash 2 no fundo do tanque do Loading Dock, 2,6 m debaixo d'água, andando por baixo do cais. O Snake nada e mergulha
+ali (é o começo do Metal Gear Solid); o Crash 2 só afundava. E ele usava a regra de parede dos guardas, não a do Snake:
+66 paredes do Dock que seguram o Snake não seguravam ele, inclusive as da borda da fase. No teste 15 ele tem a regra do
+Snake, boia com a água no peito e pega os itens do chão. As três correções custaram 384 bytes, e o executável ficou
+com 96 bytes livres: a próxima novidade vai ter que liberar memória antes.
 
 ### O que essa jornada ensinou
 
