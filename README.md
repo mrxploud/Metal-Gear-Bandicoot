@@ -1,5 +1,7 @@
 # Metal Gear Bandicoot
 
+**English:** [README.en.md](README.en.md)
+
 ![O Crash Bandicoot na câmera de abertura do Loading Dock, do Metal Gear Solid](docs/img/00_capa.png)
 
 <sub>O jogo rodando: o Crash do Warped na cena de abertura do Loading Dock, do Metal Gear Solid.</sub>
@@ -8,7 +10,7 @@
 
 Um projeto de **[mrxploud](https://github.com/mrxploud)** ([ByteMirage](https://www.youtube.com/@ByteMirage)), feito em parceria com o Claude (dois deles, trabalhando ao mesmo tempo).
 
-[**Discord**](https://discord.com/invite/4H5hGwVnPn) · [**YouTube (ByteMirage)**](https://www.youtube.com/@ByteMirage) · [**Baixar o projeto (.zip)**](https://github.com/mrxploud/Metal-Gear-Bandicoot/archive/refs/heads/main.zip)
+[**Discord**](https://discord.com/invite/4H5hGwVnPn) · [**YouTube (ByteMirage)**](https://www.youtube.com/@ByteMirage) · [**YouTube em inglês (ByteMirage Experiments)**](https://www.youtube.com/@ByteMirageExperiments) · [**Baixar o projeto (.zip)**](https://github.com/mrxploud/Metal-Gear-Bandicoot/archive/refs/heads/main.zip)
 
 > **Para jogar:** monte os discos com os passos de [Como rodar](#como-rodar) (com as suas cópias dos jogos) e dê **dois cliques no [`JOGAR.bat`](JOGAR.bat)**. Ele abre a fusão na tela de título, com som, teclado e controle.
 
